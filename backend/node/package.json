@@ -1,0 +1,16 @@
+{
+  "name": "public_defender",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://paytonschwarz@bitbucket.org/cmps115project/115projectrepo.git"
+  },
+  "author": "Payton",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/cmps115project/115projectrepo#readme"
+}
