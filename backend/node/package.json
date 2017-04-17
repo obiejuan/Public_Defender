@@ -1,7 +1,7 @@
 {
   "name": "public_defender",
   "version": "1.0.0",
-  "description": "",
+  "description": "Public Defender Server",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
