@@ -12,5 +12,9 @@
   },
   "author": "Payton",
   "license": "ISC",
-  "homepage": "https://bitbucket.org/cmps115project/115projectrepo#readme"
+  "homepage": "https://bitbucket.org/cmps115project/115projectrepo#readme",
+  "dependencies": {
+    "express": "^4.15.2",
+    "pg-promise": "^5.6.4"
+  }
 }
