@@ -1,21 +1,11 @@
-######################################
-INSTALLATION:
-######################################
-
+*******************************************************
+1.) Installation:
+*******************************************************
 $ npm install
 
-######################################
-RUN:
-######################################
-
+*******************************************************
+2.) Run:
+*******************************************************
 $ node app.js
 
-######################################
-NOTES:
-######################################
-Added postgresl module for interaction with database. 
-
-Currently this is a barebones express project. It may be wise to build out a more full scaffolding
-in the event that there needs to be a website where we are serving actual web pages. This is not the
-focus now, so it is mostly acting as an interface for the app.
 
