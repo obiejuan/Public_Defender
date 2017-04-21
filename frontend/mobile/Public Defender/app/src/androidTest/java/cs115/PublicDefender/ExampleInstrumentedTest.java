@@ -1,4 +1,4 @@
-package cs115.audiorecord;
+package cs115.PublicDefender;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("cs115.audiorecord", appContext.getPackageName());
+        assertEquals("cs115.PublicDefender", appContext.getPackageName());
     }
 }
