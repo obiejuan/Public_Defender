@@ -1,2 +1,2 @@
-"Public Defender" is the one running in Native Android
-"publicDefender" is the React project
+Removed react native project
+Added public_defender android project.
