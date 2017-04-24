@@ -9,11 +9,11 @@
     tools:layout_editor_absoluteX="0dp">
 
     <Button
-        android:id="@+id/button"
+        android:id="@+id/fb_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="100dp"
-        android:text="Button"
+        android:text="File Browser"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginStart="97dp"
         tools:layout_constraintLeft_creator="1"
