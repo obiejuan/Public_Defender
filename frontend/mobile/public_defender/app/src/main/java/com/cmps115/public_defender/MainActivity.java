@@ -1,7 +1,13 @@
 package com.cmps115.public_defender;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.EditText;
+
+import static android.provider.AlarmClock.EXTRA_MESSAGE;
 
 /*
 Please note that if you want to change the draw/drop theme for this activity you need to ensure you're setting the contraints.
@@ -16,4 +22,20 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
     }
+
+    public void broadCast(View view) {
+        // Do something in response to button
+        Intent intent = new Intent(this, Settings.class);
+        Log.d("Record", "recording");
+        startActivity(intent);
+
+    }
+
+    public void gotoMenu(View view){
+        Intent intent = new Intent(this, Settings.class);
+        Log.d("Settings", "clicked menu");
+        startActivity(intent);
+
+    }
+
 }
