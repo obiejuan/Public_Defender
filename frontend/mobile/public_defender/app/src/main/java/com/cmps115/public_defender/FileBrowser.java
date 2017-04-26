@@ -4,6 +4,7 @@ import android.app.ListActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -23,14 +24,17 @@ public class FileBrowser extends ListActivity {
         // Sets the "view" to be the following XML file.
         setContentView(R.layout.file_browser_activity);
 
+        // Get this app's external cache directory.
+        //path = getExternalFilesDir(null).toString();
+        path = "/";
         // Make directory on external storage if it doesn't already exist.
         // ExternalFilesDir is the external storage private to this app.
         // BUT, this cache is deleted when the user uninstalls our app.
-        File folder = new File (getExternalFilesDir(null).toString());
+        /*File folder = new File (path);
         if (!folder.exists()) {
             folder.mkdir();
-        }
-        path = getExternalFilesDir(null).toString();
+        }*/
+
         if (getIntent().hasExtra("path")) {
             path = getIntent().getStringExtra("path");
         }
@@ -61,6 +65,8 @@ public class FileBrowser extends ListActivity {
         setListAdapter(adapter);
     }
 
+    // I can't get this to open other directories...
+    // But this probably isn't necessary for our purposes.
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         String filename = (String) getListAdapter().getItem(position);
