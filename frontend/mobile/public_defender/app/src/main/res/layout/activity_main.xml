@@ -61,4 +61,19 @@
         tools:layout_editor_absoluteY="20dp"
         tools:layout_editor_absoluteX="0dp" />
 
+    <Button
+        android:id="@+id/button7"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Current Events"
+        android:textSize="25sp"
+        tools:layout_constraintRight_creator="1"
+        tools:layout_constraintBottom_creator="1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        tools:layout_constraintLeft_creator="1"
+        android:layout_marginBottom="198dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:onClick="gotoCurrentEvents"/>
+
 </android.support.constraint.ConstraintLayout>
