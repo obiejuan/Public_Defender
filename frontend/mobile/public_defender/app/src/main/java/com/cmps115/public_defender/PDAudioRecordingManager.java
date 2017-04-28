@@ -3,8 +3,14 @@ package com.cmps115.public_defender;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.media.AudioFormat;
+import android.os.Environment;
 import android.util.Log;
 
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -26,9 +32,11 @@ public class PDAudioRecordingManager {
     int BufferElements2Rec = 1024; // want to play 2048 (2K) since 2 bytes we use only 1024
     int BytesPerElement = 2; // 2 bytes in 16bit format
 
-    private short[] recordingData;
+    private byte[] recordingData;
 
-    private ArrayList<short[]> samples;
+    private ArrayList<byte[]> samples;
+
+    DataOutputStream dataStream;
 
     int bufferSize = 0;
 
@@ -42,6 +50,27 @@ public class PDAudioRecordingManager {
         recorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT,
                 RECORDER_SAMPLERATE, RECORDER_CHANNELS,
                 RECORDER_AUDIO_ENCODING, bufferSize);
+        File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
+                +"/outfile.pcm");
+        try
+        {
+            file.createNewFile();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        try
+        {
+            OutputStream os = new FileOutputStream(file);
+            BufferedOutputStream outStream = new BufferedOutputStream(os);
+            dataStream = new DataOutputStream(outStream);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
 
         recorder.startRecording();
 
@@ -58,16 +87,37 @@ public class PDAudioRecordingManager {
         shouldRecord = false;
         recorder.stop();
         recorder.release();
+        try
+        {
+            dataStream.close();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
         Log.d("Recorded # samples", "" + samples.size());
     }
 
     private void recordThread() {
         while (shouldRecord) {
-            recordingData = new short[bufferSize];
+            recordingData = new byte[bufferSize];
             recorder.read(recordingData, 0, recordingData.length);
+            try
+            {
+                dataStream.write(recordingData);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
             samples.add(recordingData);
             //Log.d("Sample: ", Arrays.toString(recordingData));
+            
 
         }
+    }
+
+    private void convertToWav(File pcmFile) {
+
     }
 }
