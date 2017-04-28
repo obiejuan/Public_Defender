@@ -5,9 +5,9 @@ Linux (ubuntu):
 1.) Install docker
     $ ./install_docker.sh
 2.) Build docker image:
-    $ sudo docker build -f Dockerfile . -t node:server 
+    $ ./build_docker 
 3.) Run server:
-    $ sudo docker run -P --name nodejs_server backend node app.js
+    $ ./run_docker-dev.sh
 4.) Done?
     $ sudo docker kill nodejs_server
 

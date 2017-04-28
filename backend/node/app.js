@@ -1,6 +1,17 @@
 var express = require('express')
 const fs = require('fs')
 var bodyParser = require("body-parser");
+var pgp = require('pg-promise')({});
+//var connectionString = 'postgres://localhost:5432/pdefender-dev';
+var cn = {
+    host: 'localhost',
+    port: 5432,
+    database: 'pdefender-dev',
+    user: 'node',
+    password: 'password'
+};
+var db = pgp(cn);
+
 var app = express()
 
 // only parsing json automatically where needed.
@@ -8,9 +19,38 @@ app.post('/upload/', bodyParser.json())
 
 
 // boilerplate response
-app.get('/', function (req, res) {
-  res.send('Hello World!')
-  console.log(req)
+app.get('/', function (req, res, next) {
+  //res.send('Hello World!')
+  //console.log(req)
+  db.any('select * from pd_user')
+    .then(function (data) {
+      	res.status(200)
+        	.json({
+          	  status: 'success',
+          	  data: data,
+          	  message: 'Retrieved ALL users'
+        	});
+    })
+    .catch(function (err) {
+      	return next(err);
+    });
+})
+
+app.put('/test/', function(req, res, next){
+	db.query('INSERT INTO pd_user (auth_key, email) VALUES ($1, $2)',  ['somefakerandomauthkeyvalue','joeshmoe@myspace.why'])
+	.then(function () {
+	  db.query('select * from pd_user').then(function (auth_key, email) {
+      res.status(200)
+        .json({
+          status: 'success',
+          key: auth_key,
+          e: email,
+        });
+        })
+    })
+    .catch(function (err) {
+      return next(err);
+    });
 })
 
 app.post('/upload/', function(req, res) {
