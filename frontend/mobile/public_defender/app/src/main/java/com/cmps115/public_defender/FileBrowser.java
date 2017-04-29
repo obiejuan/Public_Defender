@@ -34,8 +34,8 @@ public class FileBrowser extends ListActivity {
         setContentView(R.layout.file_browser_activity);
 
         // Get this app's external cache directory.
-        path = getExternalFilesDir(null).toString();
-        //path = "/";
+        //path = getExternalFilesDir(null).toString();
+        path = "/";
         // WHY CAN'T I SEE ANYTHING IN THIS DIRECTORY??
         //path = Environment.getExternalStorageDirectory().toString();
         Log.d("PATH IS: ", path);
