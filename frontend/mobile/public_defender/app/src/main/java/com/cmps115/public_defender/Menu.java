@@ -29,7 +29,7 @@ public class Menu extends AppCompatActivity {
     }
 
     public void gotoMyRecordings(View view){
-        Intent intent = new Intent(this, MyRecordings.class);
+        Intent intent = new Intent(this, FileBrowser.class);
         startActivity(intent);
     }
 }
