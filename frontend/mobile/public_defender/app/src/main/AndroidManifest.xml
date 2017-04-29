@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.cmps115.public_defender">
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -18,7 +19,11 @@
         <activity android:name=".Settings" />
         <activity android:name=".Menu" />
         <activity android:name=".CurrentEvents" />
-        <activity android:name=".MyRecordings"></activity>
+        <activity
+            android:name=".FileBrowser"
+            android:label="public_defender"
+            android:theme="@style/AppTheme">
+        </activity>
     </application>
 
 </manifest>
