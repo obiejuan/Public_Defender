@@ -43,7 +43,6 @@ app.post('/user/new/', function(req, res, next){
 	user = req.body
 	user_promise = db.query('INSERT INTO pd_user (auth_key, email) VALUES ($1, $2)',  [ user.auth_key, user.email ])
 	.then(function (response_db) {
-		console.log(out)
 	  db.any('select * from pd_user').then(function (data) {
       res.status(200)
         .json({
