@@ -7,7 +7,7 @@ const uuid = require('uuid/v4');
 var cn = {
     host: 'localhost',
     port: 5432,
-    database: 'pdefender-dev',
+    database: 'pdefender',
     user: 'node',
     password: 'password'
 };
@@ -18,7 +18,42 @@ var app = express()
 // only parsing json automatically where needed.
 app.post('/upload/', bodyParser.json())
 app.post('/user/new/', bodyParser.json())
+app.post('/nearby/', bodyParser.json())
 
+
+
+
+/*	Table def (not exact sql):
+
+	CREATE TABLE public.pd_event
+	(
+	  id integer Primary Key,
+	  filename character varying(255),
+	  location point,   <---- Points are taken as (longitude, latitude)
+	)
+
+	CREATE TABLE public.pd_user
+	(
+	  id integer Primary Key,
+	  auth_key character varying(255),
+	  email character varying(255),
+	)
+
+	assuming we are at: (-97.515678, 35.512363)
+	others at:
+
+	-97.510185, 35.496025
+	-97.508039, 35.523762
+	-98.473206, 35.866413
+	-97.505035, 35.484388
+
+	SELECT *, point(-97.515678, 35.512363) <@> pd_event.location AS event_dist
+	FROM pd_event
+	WHERE (point(-97.515678, 35.512363) <@> pd_event.location) < 10 
+	ORDER by event_dist;
+	*** 10 is the distance in miles ^^^^ ***
+
+*/
 
 // boilerplate response
 app.get('/', function (req, res, next) {
@@ -29,6 +64,24 @@ app.get('/', function (req, res, next) {
           	  status: 'success',
           	  data: data,
           	  message: 'All events included.'
+        	});
+    })
+    .catch(function (err) {
+      	return next(err);
+    });
+})
+
+// get nearby incidents
+app.post('/nearby/', function (req, res, next) {
+	current_location = req.body.location
+	distance = req.body.distance
+  	db.any('SELECT id, location, active, point($1) <@> pd_event.location AS event_dist FROM pd_event WHERE (point($1) <@> pd_event.location) < ($2) ORDER by event_dist;', 
+  	[ current_location, distance ])
+    .then(function (data) {
+      	res.status(200)
+        	.json({
+          	  status: 'success',
+          	  data: data,
         	});
     })
     .catch(function (err) {
@@ -56,7 +109,7 @@ app.post('/user/new/', function(req, res, next){
     });
 })
 
-app.post('/upload/', function(req, res) {
+app.post('/upload/', function(req, res, next) {
 	/*******************************************************
 		Used as authentication and handshake to begin file
 		upload below. Steps required:
@@ -84,6 +137,9 @@ app.post('/upload/', function(req, res) {
           url: "/upload/"+unique_token,
         });
     })
+    .catch(function (err) {
+      return next(err);
+    });
 })
 
 
