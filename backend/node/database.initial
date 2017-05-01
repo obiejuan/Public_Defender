@@ -2,6 +2,8 @@
 -- PostgreSQL database cluster dump
 --
 
+-- Started on 2017-04-30 15:01:34 PDT
+
 SET default_transaction_read_only = off;
 
 SET client_encoding = 'SQL_ASCII';
@@ -12,7 +14,7 @@ SET standard_conforming_strings = on;
 --
 
 CREATE ROLE node;
-ALTER ROLE node WITH SUPERUSER INHERIT CREATEROLE CREATEDB LOGIN NOREPLICATION NOBYPASSRLS;
+ALTER ROLE node WITH SUPERUSER INHERIT CREATEROLE CREATEDB LOGIN NOREPLICATION NOBYPASSRLS PASSWORD 'md55bf195bc7cd93b5210d25816ffde827f';
 CREATE ROLE postgres;
 ALTER ROLE postgres WITH SUPERUSER INHERIT CREATEROLE CREATEDB LOGIN REPLICATION BYPASSRLS;
 
@@ -25,14 +27,14 @@ ALTER ROLE postgres WITH SUPERUSER INHERIT CREATEROLE CREATEDB LOGIN REPLICATION
 -- Database creation
 --
 
-CREATE DATABASE "pdefender-dev" WITH TEMPLATE = template0 OWNER = postgres;
+CREATE DATABASE pdefender WITH TEMPLATE = template0 OWNER = node ENCODING = 'UTF8';
 REVOKE ALL ON DATABASE template1 FROM PUBLIC;
 REVOKE ALL ON DATABASE template1 FROM postgres;
 GRANT ALL ON DATABASE template1 TO postgres;
 GRANT CONNECT ON DATABASE template1 TO PUBLIC;
 
 
-\connect -reuse-previous=on "dbname='pdefender-dev'"
+\connect pdefender
 
 SET default_transaction_read_only = off;
 
@@ -43,26 +45,48 @@ SET default_transaction_read_only = off;
 -- Dumped from database version 9.5.6
 -- Dumped by pg_dump version 9.5.6
 
+-- Started on 2017-04-30 15:01:34 PDT
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
-SET client_encoding = 'SQL_ASCII';
+SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
 SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
+-- TOC entry 2 (class 3079 OID 16498)
+-- Name: cube; Type: EXTENSION; Schema: -; Owner: 
 --
 
-CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+CREATE EXTENSION IF NOT EXISTS cube WITH SCHEMA public;
 
 
 --
--- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
+-- TOC entry 2188 (class 0 OID 0)
+-- Dependencies: 2
+-- Name: EXTENSION cube; Type: COMMENT; Schema: -; Owner: 
 --
 
-COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
+COMMENT ON EXTENSION cube IS 'data type for multidimensional cubes';
+
+
+--
+-- TOC entry 1 (class 3079 OID 16570)
+-- Name: earthdistance; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS earthdistance WITH SCHEMA public;
+
+
+--
+-- TOC entry 2189 (class 0 OID 0)
+-- Dependencies: 1
+-- Name: EXTENSION earthdistance; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION earthdistance IS 'calculate great-circle distances on the surface of the Earth';
 
 
 SET search_path = public, pg_catalog;
@@ -72,20 +96,23 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
+-- TOC entry 182 (class 1259 OID 16386)
 -- Name: pd_event; Type: TABLE; Schema: public; Owner: node
 --
 
 CREATE TABLE pd_event (
     id integer NOT NULL,
-    pd_user_id integer,
     filename character varying(255),
-    location point
+    location point,
+    pd_user_id integer NOT NULL,
+    active boolean DEFAULT true NOT NULL
 );
 
 
 ALTER TABLE pd_event OWNER TO node;
 
 --
+-- TOC entry 183 (class 1259 OID 16389)
 -- Name: pd_event_id_seq; Type: SEQUENCE; Schema: public; Owner: node
 --
 
@@ -100,6 +127,8 @@ CREATE SEQUENCE pd_event_id_seq
 ALTER TABLE pd_event_id_seq OWNER TO node;
 
 --
+-- TOC entry 2190 (class 0 OID 0)
+-- Dependencies: 183
 -- Name: pd_event_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: node
 --
 
@@ -107,6 +136,7 @@ ALTER SEQUENCE pd_event_id_seq OWNED BY pd_event.id;
 
 
 --
+-- TOC entry 184 (class 1259 OID 16391)
 -- Name: pd_user; Type: TABLE; Schema: public; Owner: node
 --
 
@@ -120,6 +150,7 @@ CREATE TABLE pd_user (
 ALTER TABLE pd_user OWNER TO node;
 
 --
+-- TOC entry 185 (class 1259 OID 16397)
 -- Name: pd_user_id_seq; Type: SEQUENCE; Schema: public; Owner: node
 --
 
@@ -134,6 +165,8 @@ CREATE SEQUENCE pd_user_id_seq
 ALTER TABLE pd_user_id_seq OWNER TO node;
 
 --
+-- TOC entry 2191 (class 0 OID 0)
+-- Dependencies: 185
 -- Name: pd_user_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: node
 --
 
@@ -141,6 +174,7 @@ ALTER SEQUENCE pd_user_id_seq OWNED BY pd_user.id;
 
 
 --
+-- TOC entry 2054 (class 2604 OID 16399)
 -- Name: id; Type: DEFAULT; Schema: public; Owner: node
 --
 
@@ -148,6 +182,7 @@ ALTER TABLE ONLY pd_event ALTER COLUMN id SET DEFAULT nextval('pd_event_id_seq':
 
 
 --
+-- TOC entry 2056 (class 2604 OID 16400)
 -- Name: id; Type: DEFAULT; Schema: public; Owner: node
 --
 
@@ -155,36 +190,50 @@ ALTER TABLE ONLY pd_user ALTER COLUMN id SET DEFAULT nextval('pd_user_id_seq'::r
 
 
 --
+-- TOC entry 2177 (class 0 OID 16386)
+-- Dependencies: 182
 -- Data for Name: pd_event; Type: TABLE DATA; Schema: public; Owner: node
 --
 
-COPY pd_event (id, pd_user_id, filename, location) FROM stdin;
+COPY pd_event (id, filename, location, pd_user_id, active) FROM stdin;
+5	1_fc3950d9-39f4-4eb8-b2f0-1d4abc78df91.wav	(-97.510185000000007,35.496025000000003)	1	t
+6	1_facdb840-cb33-44af-a483-3a60614fccf5.wav	(-97.5080389999999966,35.5237619999999978)	1	t
+7	1_f2aea21c-65b8-44ee-9a00-cc2e55563c72.wav	(-98.4732060000000047,35.8664130000000014)	1	t
 \.
 
 
 --
+-- TOC entry 2192 (class 0 OID 0)
+-- Dependencies: 183
 -- Name: pd_event_id_seq; Type: SEQUENCE SET; Schema: public; Owner: node
 --
 
-SELECT pg_catalog.setval('pd_event_id_seq', 1, false);
+SELECT pg_catalog.setval('pd_event_id_seq', 7, true);
 
 
 --
+-- TOC entry 2179 (class 0 OID 16391)
+-- Dependencies: 184
 -- Data for Name: pd_user; Type: TABLE DATA; Schema: public; Owner: node
 --
 
 COPY pd_user (id, auth_key, email) FROM stdin;
+1	78yahsdf76gahsdf	blah@gmail.com
+2	7hu8ansdf79hpa9su8dfjasndf	someother@gmail.com
 \.
 
 
 --
+-- TOC entry 2193 (class 0 OID 0)
+-- Dependencies: 185
 -- Name: pd_user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: node
 --
 
-SELECT pg_catalog.setval('pd_user_id_seq', 1, false);
+SELECT pg_catalog.setval('pd_user_id_seq', 1, true);
 
 
 --
+-- TOC entry 2059 (class 2606 OID 16402)
 -- Name: pd_event_pkey; Type: CONSTRAINT; Schema: public; Owner: node
 --
 
@@ -193,6 +242,7 @@ ALTER TABLE ONLY pd_event
 
 
 --
+-- TOC entry 2061 (class 2606 OID 16404)
 -- Name: pd_user_pkey; Type: CONSTRAINT; Schema: public; Owner: node
 --
 
@@ -201,14 +251,25 @@ ALTER TABLE ONLY pd_user
 
 
 --
--- Name: pd_event_pd_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: node
+-- TOC entry 2057 (class 1259 OID 16497)
+-- Name: fki_pd_user_id; Type: INDEX; Schema: public; Owner: node
+--
+
+CREATE INDEX fki_pd_user_id ON pd_event USING btree (pd_user_id);
+
+
+--
+-- TOC entry 2062 (class 2606 OID 16492)
+-- Name: pd_user_id; Type: FK CONSTRAINT; Schema: public; Owner: node
 --
 
 ALTER TABLE ONLY pd_event
-    ADD CONSTRAINT pd_event_pd_user_id_fkey FOREIGN KEY (pd_user_id) REFERENCES pd_user(id);
+    ADD CONSTRAINT pd_user_id FOREIGN KEY (pd_user_id) REFERENCES pd_user(id);
 
 
 --
+-- TOC entry 2187 (class 0 OID 0)
+-- Dependencies: 8
 -- Name: public; Type: ACL; Schema: -; Owner: postgres
 --
 
@@ -217,6 +278,8 @@ REVOKE ALL ON SCHEMA public FROM postgres;
 GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
+
+-- Completed on 2017-04-30 15:01:34 PDT
 
 --
 -- PostgreSQL database dump complete
@@ -233,6 +296,8 @@ SET default_transaction_read_only = off;
 -- Dumped from database version 9.5.6
 -- Dumped by pg_dump version 9.5.6
 
+-- Started on 2017-04-30 15:01:34 PDT
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET client_encoding = 'SQL_ASCII';
@@ -242,6 +307,8 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- TOC entry 2096 (class 1262 OID 12377)
+-- Dependencies: 2095
 -- Name: postgres; Type: COMMENT; Schema: -; Owner: postgres
 --
 
@@ -249,6 +316,7 @@ COMMENT ON DATABASE postgres IS 'default administrative connection database';
 
 
 --
+-- TOC entry 1 (class 3079 OID 12359)
 -- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
 --
 
@@ -256,6 +324,8 @@ CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 
 
 --
+-- TOC entry 2099 (class 0 OID 0)
+-- Dependencies: 1
 -- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
 --
 
@@ -263,6 +333,8 @@ COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 
 --
+-- TOC entry 2098 (class 0 OID 0)
+-- Dependencies: 7
 -- Name: public; Type: ACL; Schema: -; Owner: postgres
 --
 
@@ -271,6 +343,8 @@ REVOKE ALL ON SCHEMA public FROM postgres;
 GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
+
+-- Completed on 2017-04-30 15:01:34 PDT
 
 --
 -- PostgreSQL database dump complete
@@ -287,6 +361,8 @@ SET default_transaction_read_only = off;
 -- Dumped from database version 9.5.6
 -- Dumped by pg_dump version 9.5.6
 
+-- Started on 2017-04-30 15:01:34 PDT
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET client_encoding = 'SQL_ASCII';
@@ -296,6 +372,8 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- TOC entry 2162 (class 1262 OID 1)
+-- Dependencies: 2161
 -- Name: template1; Type: COMMENT; Schema: -; Owner: postgres
 --
 
@@ -303,6 +381,7 @@ COMMENT ON DATABASE template1 IS 'default template for new databases';
 
 
 --
+-- TOC entry 1 (class 3079 OID 12359)
 -- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
 --
 
@@ -310,6 +389,8 @@ CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 
 
 --
+-- TOC entry 2165 (class 0 OID 0)
+-- Dependencies: 1
 -- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
 --
 
@@ -317,6 +398,42 @@ COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 
 --
+-- TOC entry 3 (class 3079 OID 16405)
+-- Name: cube; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS cube WITH SCHEMA public;
+
+
+--
+-- TOC entry 2166 (class 0 OID 0)
+-- Dependencies: 3
+-- Name: EXTENSION cube; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION cube IS 'data type for multidimensional cubes';
+
+
+--
+-- TOC entry 2 (class 3079 OID 16477)
+-- Name: earthdistance; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS earthdistance WITH SCHEMA public;
+
+
+--
+-- TOC entry 2167 (class 0 OID 0)
+-- Dependencies: 2
+-- Name: EXTENSION earthdistance; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION earthdistance IS 'calculate great-circle distances on the surface of the Earth';
+
+
+--
+-- TOC entry 2164 (class 0 OID 0)
+-- Dependencies: 9
 -- Name: public; Type: ACL; Schema: -; Owner: postgres
 --
 
@@ -326,9 +443,13 @@ GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
+-- Completed on 2017-04-30 15:01:34 PDT
+
 --
 -- PostgreSQL database dump complete
 --
+
+-- Completed on 2017-04-30 15:01:34 PDT
 
 --
 -- PostgreSQL database cluster dump complete

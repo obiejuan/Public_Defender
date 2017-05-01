@@ -1,19 +1,115 @@
 var express = require('express')
 const fs = require('fs')
 var bodyParser = require("body-parser");
+var pgp = require('pg-promise')({});
+const uuid = require('uuid/v4');
+//var connectionString = 'postgres://localhost:5432/pdefender-dev';
+var cn = {
+    host: 'localhost',
+    port: 5432,
+    database: 'pdefender',
+    user: 'node',
+    password: 'password'
+};
+var db = pgp(cn);
+
 var app = express()
 
 // only parsing json automatically where needed.
 app.post('/upload/', bodyParser.json())
+app.post('/user/new/', bodyParser.json())
+app.post('/nearby/', bodyParser.json())
 
+
+
+
+/*	Table def (not exact sql):
+
+	CREATE TABLE public.pd_event
+	(
+	  id integer Primary Key,
+	  filename character varying(255),
+	  location point,   <---- Points are taken as (longitude, latitude)
+	)
+
+	CREATE TABLE public.pd_user
+	(
+	  id integer Primary Key,
+	  auth_key character varying(255),
+	  email character varying(255),
+	)
+
+	assuming we are at: (-97.515678, 35.512363)
+	others at:
+
+	-97.510185, 35.496025
+	-97.508039, 35.523762
+	-98.473206, 35.866413
+	-97.505035, 35.484388
+
+	SELECT *, point(-97.515678, 35.512363) <@> pd_event.location AS event_dist
+	FROM pd_event
+	WHERE (point(-97.515678, 35.512363) <@> pd_event.location) < 10 
+	ORDER by event_dist;
+	*** 10 is the distance in miles ^^^^ ***
+
+*/
 
 // boilerplate response
-app.get('/', function (req, res) {
-  res.send('Hello World!')
-  console.log(req)
+app.get('/', function (req, res, next) {
+  db.any('select * FROM pd_user INNER JOIN pd_event ON pd_event.pd_user_id=pd_user.id')
+    .then(function (data) {
+      	res.status(200)
+        	.json({
+          	  status: 'success',
+          	  data: data,
+          	  message: 'All events included.'
+        	});
+    })
+    .catch(function (err) {
+      	return next(err);
+    });
 })
 
-app.post('/upload/', function(req, res) {
+// get nearby incidents
+app.post('/nearby/', function (req, res, next) {
+	current_location = req.body.location
+	distance = req.body.distance
+  	db.any('SELECT id, location, active, point($1) <@> pd_event.location AS event_dist FROM pd_event WHERE (point($1) <@> pd_event.location) < ($2) ORDER by event_dist;', 
+  	[ current_location, distance ])
+    .then(function (data) {
+      	res.status(200)
+        	.json({
+          	  status: 'success',
+          	  data: data,
+        	});
+    })
+    .catch(function (err) {
+      	return next(err);
+    });
+})
+
+/*
+	Create test users quickly
+*/
+app.post('/user/new/', function(req, res, next){
+	user = req.body
+	user_promise = db.query('INSERT INTO pd_user (auth_key, email) VALUES ($1, $2)',  [ user.auth_key, user.email ])
+	.then(function (response_db) {
+	  db.any('select * from pd_user').then(function (data) {
+      res.status(200)
+        .json({
+          status: 'success',
+          data: data,
+        });
+        })
+    })
+    .catch(function (err) {
+      return next(err);
+    });
+})
+
+app.post('/upload/', function(req, res, next) {
 	/*******************************************************
 		Used as authentication and handshake to begin file
 		upload below. Steps required:
@@ -26,13 +122,27 @@ app.post('/upload/', function(req, res) {
 		to minimize network requests. 
 	*******************************************************/
 	console.log(req.body)
+	location = req.body.location 
+	// check user credentials
+	user = req.body.user /// @todo: change to actual credential lookup 
+
+	unique_token = user + '_' + uuid()
 	
-	// placeholder response
-	res.send({	
-				"upload_token": "uniquekey",
-				"url": "/upload/uniquekey"
-			})
+	db.query('INSERT INTO pd_event (pd_user_id, filename, location) VALUES ($1, $2, $3)',  [ user, unique_token + '.wav', location ]) 
+	.then(function () {
+		res.status(200)
+        .json({
+          status: 'success',
+          upload_token: unique_token,
+          url: "/upload/"+unique_token,
+        });
+    })
+    .catch(function (err) {
+      return next(err);
+    });
 })
+
+
 
 app.post('/upload/:id', function(req, res) {
 	/*******************************************************
@@ -43,10 +153,11 @@ app.post('/upload/:id', function(req, res) {
 	 		3.) Hook request body stream into filestream 
 	 		4.) Respond with status 
 	*******************************************************/
+
 	id = req.params.id
-	console.log("Beginning transfer for unique key: " + id)
+	console.log("Beginning transfer for unique key: " + id)	
 	
-	fileStream = fs.createWriteStream('test.png')
+	fileStream = fs.createWriteStream(id + ".wav")
 	req.pipe(fileStream)
 	
 	var tick = 0
