@@ -21,6 +21,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Author: Payton
+ */
+
 public class FileBrowser extends ListActivity {
     private String path;
     private File dir;
