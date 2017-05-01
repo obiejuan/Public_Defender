@@ -5,47 +5,63 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.cmps115.public_defender.MainActivity"
-    tools:layout_editor_absoluteY="81dp"
+    tools:layout_editor_absoluteY="25dp"
     tools:layout_editor_absoluteX="0dp">
 
     <Button
         android:id="@+id/button"
         android:layout_width="0dp"
-        android:layout_height="95dp"
+        android:layout_height="158dp"
         android:background="@color/colorAccent"
         android:text="Record / Broadcast"
         android:textSize="40sp"
         android:onClick="broadCast"
         tools:layout_constraintTop_creator="1"
         tools:layout_constraintRight_creator="1"
-        android:layout_marginStart="35dp"
-        android:layout_marginEnd="35dp"
         app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginTop="60dp"/>
+        android:layout_marginTop="119dp"
+        tools:layout_constraintLeft_creator="1"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/button2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="1dp"
-        android:text="Menu"
-        android:textStyle="bold"
+        android:onClick="checkAndSignOut"
+        android:text="Sign out"
         android:textSize="25sp"
-        android:onClick="gotoMenu"
-        tools:layout_constraintRight_creator="1"
+        android:textStyle="bold"
         tools:layout_constraintBottom_creator="1"
+        android:layout_marginStart="6dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginRight="1dp" />
+        tools:layout_constraintLeft_creator="1"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginLeft="6dp" />
+
+    <Button
+        android:id="@+id/button5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="gotoMenu"
+        android:text="Menu"
+        android:textSize="25sp"
+        android:textStyle="bold"
+        tools:layout_constraintBottom_creator="1"
+        android:layout_marginStart="290dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:layout_constraintLeft_creator="1"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginLeft="290dp" />
 
     <android.support.constraint.Guideline
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/guideline"
-        app:layout_constraintGuide_begin="20dp"
         android:orientation="vertical"
+        app:layout_constraintGuide_end="398dp"
         tools:layout_editor_absoluteY="0dp"
-        tools:layout_editor_absoluteX="20dp" />
+        tools:layout_editor_absoluteX="-12dp" />
 
     <android.support.constraint.Guideline
         android:layout_width="wrap_content"
@@ -62,13 +78,16 @@
         android:layout_height="wrap_content"
         android:text="Current Events"
         android:textSize="25sp"
+        android:onClick="gotoCurrentEvents"
+        tools:layout_constraintTop_creator="1"
         tools:layout_constraintRight_creator="1"
         tools:layout_constraintBottom_creator="1"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="200dp"
         tools:layout_constraintLeft_creator="1"
         android:layout_marginBottom="198dp"
         app:layout_constraintLeft_toLeftOf="parent"
-        android:onClick="gotoCurrentEvents"/>
+        app:layout_constraintTop_toTopOf="@+id/button" />
 
 </android.support.constraint.ConstraintLayout>

@@ -10,19 +10,23 @@ import android.support.v7.app.AppCompatActivity;
  * Created by seth on 4/26/17.
  */
 
-public class Util extends AppCompatActivity{
+public class Util extends AppCompatActivity implements View.OnClickListener{
 
-    private Util() {}
+    public Util() {
 
-    public void gotoMenu(View view){
+    }
+    @Override
+    public void onClick(View view) {
+        Intent intent = new Intent(getBaseContext(), MainActivity.class);
+        setContentView(R.layout.activity_main);
+        startActivity(intent);
+        //goHome(view);
+    }
+
+    private void gotoMenu(View view){
         Intent intent = new Intent(this, Menu.class);
         Log.d("Settings", "clicked menu");
         startActivity(intent);
     }
 
-    public void goHome(View view) {
-        Intent intent = new Intent(this, MainActivity.class);
-        setContentView(R.layout.activity_main);
-        startActivity(intent);
-    }
 }
