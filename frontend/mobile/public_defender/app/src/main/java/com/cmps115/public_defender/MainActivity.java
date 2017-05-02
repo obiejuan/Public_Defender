@@ -1,23 +1,27 @@
 package com.cmps115.public_defender;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
-
 
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+
 
 /*
 Please note that if you want to change the draw/drop theme for this activity you need to ensure you're setting the contraints.
@@ -29,6 +33,12 @@ This means that you will need to hit the little golden stars after you place an 
 public class MainActivity extends AppCompatActivity {
 
     GoogleApiClient mGoogleApiClient;
+    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
+    PDAudioRecordingManager pdarm;
+    private boolean isRecording = false;
+    // Requesting permission to RECORD_AUDIO
+    private boolean permissionToRecordAccepted = false;
+    private String[] permissions = {Manifest.permission.RECORD_AUDIO};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,13 +121,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void broadCast(View view) {
+        ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION);
+
+        Button r_button = (Button)findViewById(R.id.record_button);
         // Do something in response to Record button
         Context context = getApplicationContext();
         CharSequence text = "Hit Record";
         int duration = Toast.LENGTH_SHORT;
         Toast toast = Toast.makeText(context, text, duration);
         toast.show();
-       }
+
+
+        PDAudioRecordingManager pdarm = new PDAudioRecordingManager();
+        if (!isRecording) {
+            pdarm.startRecording(context);
+            r_button.setText("Stop Recording.");
+        }
+        if (isRecording) {
+            pdarm.stopRecording();
+            r_button.setText("Record");
+            pdarm = null;
+        }
+        isRecording = !isRecording;
+    }
 
     public void gotoMenu(View view){
         Intent intent = new Intent(this, Menu.class);
@@ -134,6 +160,19 @@ public class MainActivity extends AppCompatActivity {
     public void gotoCurrentEvents(View view){
         Intent intent = new Intent(this, CurrentEvents.class);
         startActivity(intent);
+    }
+
+    // Prompt user for permission to record audio
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode){
+            case REQUEST_RECORD_AUDIO_PERMISSION:
+                permissionToRecordAccepted  = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                break;
+        }
+        if (!permissionToRecordAccepted ) finish();
+
     }
 
 }

@@ -1,9 +1,11 @@
 package com.cmps115.public_defender;
 
+import android.content.Context;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.media.AudioFormat;
 import android.os.Environment;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import java.io.BufferedOutputStream;
@@ -13,8 +15,11 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by mwglynn on 4/21/17.
@@ -46,19 +51,26 @@ public class PDAudioRecordingManager {
         bufferSize = BufferElements2Rec * BytesPerElement * 2;
     }
 
-    void StartRecording() {
+    void startRecording(Context context) {
         recorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT,
                 RECORDER_SAMPLERATE, RECORDER_CHANNELS,
                 RECORDER_AUDIO_ENCODING, bufferSize);
-        File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
-                +"/outfile.pcm");
+        /*File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
+                +"/outfile.pcm");*/
+
+        File file = createPcmFile(context);
+
+        boolean success = false;
         try
         {
-            file.createNewFile();
+            success = file.createNewFile();
         }
         catch (Exception e)
         {
             e.printStackTrace();
+        }
+        if (!success) {
+            Log.d("Error creating file.", "");
         }
 
         try
@@ -83,7 +95,7 @@ public class PDAudioRecordingManager {
         recordingThread.start();
     }
 
-    void StopRecording() {
+    void stopRecording() {
         shouldRecord = false;
         recorder.stop();
         recorder.release();
@@ -96,6 +108,7 @@ public class PDAudioRecordingManager {
             e.printStackTrace();
         }
         Log.d("Recorded # samples", "" + samples.size());
+        recorder = null;
     }
 
     private void recordThread() {
@@ -119,5 +132,13 @@ public class PDAudioRecordingManager {
 
     private void convertToWav(File pcmFile) {
 
+    }
+
+    /* Returns a file located at our app's external cache directory */
+    public File createPcmFile(Context context) {
+        //File file = null;
+        String timeStamp = new SimpleDateFormat("MM-dd-yyyy_HH-mm", Locale.US).format(new Date());
+
+        return(new File (context.getExternalCacheDir().getAbsolutePath() + "/" + timeStamp + ".pcm"));
     }
 }
