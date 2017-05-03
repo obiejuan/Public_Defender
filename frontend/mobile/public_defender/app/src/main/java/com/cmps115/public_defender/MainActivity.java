@@ -35,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     GoogleApiClient mGoogleApiClient;
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
     PDAudioRecordingManager pdarm;
+    CommunicateServer serv;
     private boolean isRecording = false;
     // Requesting permission to RECORD_AUDIO
     private boolean permissionToRecordAccepted = false;
@@ -59,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
         String res = String.valueOf(mGoogleApiClient.  isConnected());
 
         Log.d("isconnected: ", res);
-
 
     }
 
@@ -132,15 +132,16 @@ public class MainActivity extends AppCompatActivity {
         toast.show();
 
 
-        PDAudioRecordingManager pdarm = new PDAudioRecordingManager();
+
         if (!isRecording) {
-            pdarm.startRecording(context);
+            pdarm = new PDAudioRecordingManager();
+            serv = new CommunicateServer(pdarm, "http://192.168.1.118:3000/upload/1_fc3950d9-39f4-4eb8-b2f0-1d4abc78df91/", context);
+            serv.startStreamAudio();
             r_button.setText("Stop Recording.");
         }
         if (isRecording) {
-            pdarm.stopRecording();
+            serv.stopStreamAudio();
             r_button.setText("Record");
-            pdarm = null;
         }
         isRecording = !isRecording;
     }

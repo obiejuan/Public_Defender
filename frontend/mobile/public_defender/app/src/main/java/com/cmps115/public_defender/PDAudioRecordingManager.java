@@ -42,6 +42,8 @@ public class PDAudioRecordingManager {
     private ArrayList<byte[]> samples;
 
     DataOutputStream dataStream;
+    DataOutputStream servStream;
+
 
     int bufferSize = 0;
 
@@ -51,7 +53,7 @@ public class PDAudioRecordingManager {
         bufferSize = BufferElements2Rec * BytesPerElement * 2;
     }
 
-    void startRecording(Context context) {
+    void startRecording(Context context, BufferedOutputStream pipeOut) { //pipeOut to null if nothing
         recorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT,
                 RECORDER_SAMPLERATE, RECORDER_CHANNELS,
                 RECORDER_AUDIO_ENCODING, bufferSize);
@@ -77,14 +79,19 @@ public class PDAudioRecordingManager {
         {
             OutputStream os = new FileOutputStream(file);
             BufferedOutputStream outStream = new BufferedOutputStream(os);
-            dataStream = new DataOutputStream(outStream);
+            if (pipeOut != null) {
+                servStream = new DataOutputStream(pipeOut); //for streaming to server
+                dataStream = new DataOutputStream(outStream);
+            }
+            else {
+                dataStream = new DataOutputStream(outStream);
+            }
         }
         catch (Exception e)
         {
             e.printStackTrace();
         }
 
-        recorder.startRecording();
 
         shouldRecord = true;
         recordingThread = new Thread(new Runnable() {
@@ -99,6 +106,15 @@ public class PDAudioRecordingManager {
         shouldRecord = false;
         recorder.stop();
         recorder.release();
+
+        // joining to ensure thread finishes writing before closing file
+        try {
+            recordingThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // close file
         try
         {
             dataStream.close();
@@ -107,16 +123,22 @@ public class PDAudioRecordingManager {
         {
             e.printStackTrace();
         }
+
         Log.d("Recorded # samples", "" + samples.size());
         recorder = null;
     }
 
     private void recordThread() {
+        //don't start until thread is ready. Frames lost otherwise.
+        recorder.startRecording();
         while (shouldRecord) {
             recordingData = new byte[bufferSize];
             recorder.read(recordingData, 0, recordingData.length);
             try
             {
+                if (servStream != null) {
+                    servStream.write(recordingData);
+                }
                 dataStream.write(recordingData);
             }
             catch (Exception e)
@@ -125,7 +147,7 @@ public class PDAudioRecordingManager {
             }
             samples.add(recordingData);
             //Log.d("Sample: ", Arrays.toString(recordingData));
-            
+
 
         }
     }
