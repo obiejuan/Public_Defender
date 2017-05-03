@@ -46,6 +46,8 @@ public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d("In function", "onCreate");
+
         super.onCreate(savedInstanceState);
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
             Log.d("is connected", "is connected");
@@ -55,7 +57,7 @@ public class LoginActivity extends AppCompatActivity {
         } else {
             setContentView(R.layout.activity_login);
             // Set up the login form
-
+            Log.d("not connected", "not connected");
             SignInButton mGoogleSignInButton = (SignInButton) findViewById(R.id.google_sign_in_button);
             mGoogleSignInButton.setOnClickListener(new OnClickListener() {
                 @Override
@@ -70,6 +72,8 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        Log.d("In function", "onActivityResult");
+
 
         // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
         if (requestCode == RC_SIGN_IN) {
@@ -93,7 +97,9 @@ public class LoginActivity extends AppCompatActivity {
 
     private static final int RC_SIGN_IN = 9001;
 
+
     private void signInWithGoogle() {
+        Log.d("In function", "signInWithGoogle");
         if(mGoogleApiClient != null) {
             mGoogleApiClient.disconnect();
         }

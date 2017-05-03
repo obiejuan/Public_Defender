@@ -79,15 +79,17 @@ public class MainActivity extends AppCompatActivity {
                 GoogleSignInAccount gsa = result.getSignInAccount();
                 String success = gsa.getId();
                 Log.d("success id token", success);
-                //Intent intent = new Intent(this, MainActivity.class);
-                //startActivity(intent);
+                Intent intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
                 //handleSignInResult(...)
             } else {
 
-                Log.d("not successful", result.toString());
+                Log.d("not successful", result.getStatus().toString());
                 //handleSignInResult(...);
             }
         } else {
+            Log.d("req code != ", "rc_signin");
+
             // Handle other values for requestCode
         }
     }
