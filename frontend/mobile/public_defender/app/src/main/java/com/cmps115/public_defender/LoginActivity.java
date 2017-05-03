@@ -48,6 +48,9 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+            Log.d("is connected", "is connected");
+            Intent intent = new Intent(this, MainActivity.class);
+            startActivity(intent);
 
         } else {
             setContentView(R.layout.activity_login);

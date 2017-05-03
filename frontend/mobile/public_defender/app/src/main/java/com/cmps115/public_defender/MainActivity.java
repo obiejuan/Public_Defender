@@ -10,6 +10,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import static android.provider.AlarmClock.EXTRA_MESSAGE;
+
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -51,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
         signIn();
         mGoogleApiClient.connect();
 
-        String res = String.valueOf(mGoogleApiClient.  isConnected());
+        String res = String.valueOf(mGoogleApiClient.isConnected());
 
         Log.d("isconnected: ", res);
 
@@ -66,9 +67,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
-
-
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -77,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == RC_SIGN_IN) {
             GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
 
-            if(result.isSuccess()) {
+            if (result.isSuccess()) {
                 GoogleSignInAccount gsa = result.getSignInAccount();
                 String success = gsa.getId();
                 Log.d("success id token", success);
@@ -94,11 +92,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void checkAndSignOut(View view){
-        if(mGoogleApiClient.isConnected()){
+    public void checkAndSignOut(View view) {
+        if (mGoogleApiClient.isConnected()) {
             signOut();
             Intent intent = new Intent(this, LoginActivity.class);
             startActivity(intent);
+            //signIn();
         }
     }
 
@@ -109,7 +108,8 @@ public class MainActivity extends AppCompatActivity {
                     public void onResult(Status status) {
                         // [START_EXCLUDE]
 //                        updateUI(false);
-                        Log.d("Signout", "sigout");
+                        Log.d("Signout", "signout");
+                        signIn();
                         // [END_EXCLUDE]
                     }
                 });
@@ -122,21 +122,21 @@ public class MainActivity extends AppCompatActivity {
         int duration = Toast.LENGTH_SHORT;
         Toast toast = Toast.makeText(context, text, duration);
         toast.show();
-       }
+    }
 
-    public void gotoMenu(View view){
+    public void gotoMenu(View view) {
         Intent intent = new Intent(this, Menu.class);
         Log.d("Menu", "clicked menu");
         startActivity(intent);
     }
 
-    public void gotoLogin(View view){
+    public void gotoLogin(View view) {
         Intent intent = new Intent(this, LoginActivity.class);
         Log.d("Menu", "clicked menu");
         startActivity(intent);
     }
 
-    public void gotoCurrentEvents(View view){
+    public void gotoCurrentEvents(View view) {
         Intent intent = new Intent(this, CurrentEvents.class);
         startActivity(intent);
     }
