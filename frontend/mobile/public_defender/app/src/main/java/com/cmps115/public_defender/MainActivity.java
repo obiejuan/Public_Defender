@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.Auth;
@@ -35,18 +34,21 @@ public class MainActivity extends AppCompatActivity {
     GoogleApiClient mGoogleApiClient;
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
     PDAudioRecordingManager pdarm;
-    CommunicateServer serv;
+    StreamToServer serv;
     private boolean isRecording = false;
     // Requesting permission to RECORD_AUDIO
     private boolean permissionToRecordAccepted = false;
+    GeoHandler geoHandler = null;
     private String[] permissions = {Manifest.permission.RECORD_AUDIO};
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        geoHandler = new GeoHandler(this);
+        /*GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 //.requestIdToken("232250430081-nrqnos5eqst3rn7o2r9c8jas6m42i6p5.apps.googleusercontent.com")
                 .build();
@@ -59,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
 
         String res = String.valueOf(mGoogleApiClient.  isConnected());
 
-        Log.d("isconnected: ", res);
+        Log.d("isconnected: ", res);*/
 
     }
 
@@ -131,11 +133,14 @@ public class MainActivity extends AppCompatActivity {
         Toast toast = Toast.makeText(context, text, duration);
         toast.show();
 
+        double[] geo = geoHandler.get_geolocation();
+        if(!(geo[0] == 0.0 && geo[1] == 0.0))
+            Log.d("[GEO]", (geo[0] + ", " + geo[1]));
 
 
         if (!isRecording) {
             pdarm = new PDAudioRecordingManager();
-            serv = new CommunicateServer(pdarm, "http://192.168.1.118:3000/upload/1_fc3950d9-39f4-4eb8-b2f0-1d4abc78df91/", context);
+            serv = new StreamToServer(pdarm, "http://192.168.1.118:3000/upload/", context);
             serv.startStreamAudio();
             r_button.setText("Stop Recording.");
         }

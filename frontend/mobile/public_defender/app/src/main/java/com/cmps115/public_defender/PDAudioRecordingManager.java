@@ -2,9 +2,14 @@ package com.cmps115.public_defender;
 
 import android.content.Context;
 import android.media.AudioRecord;
+import android.media.MediaCodec;
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.media.AudioFormat;
+import android.os.Build;
 import android.os.Environment;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
@@ -12,6 +17,7 @@ import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
@@ -156,11 +162,11 @@ public class PDAudioRecordingManager {
 
     }
 
+
     /* Returns a file located at our app's external cache directory */
     public File createPcmFile(Context context) {
         //File file = null;
         String timeStamp = new SimpleDateFormat("MM-dd-yyyy_HH-mm", Locale.US).format(new Date());
-
         return(new File (context.getExternalCacheDir().getAbsolutePath() + "/" + timeStamp + ".pcm"));
     }
 }
