@@ -29,6 +29,7 @@ import java.util.Locale;
 
 /**
  * Created by mwglynn on 4/21/17.
+ * Additions by bmccoid on 5/5/17
  */
 
 public class PDAudioRecordingManager {
@@ -63,11 +64,7 @@ public class PDAudioRecordingManager {
         recorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT,
                 RECORDER_SAMPLERATE, RECORDER_CHANNELS,
                 RECORDER_AUDIO_ENCODING, bufferSize);
-        /*File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
-                +"/outfile.pcm");*/
-
         File file = createPcmFile(context);
-
         boolean success = false;
         try
         {
@@ -80,7 +77,6 @@ public class PDAudioRecordingManager {
         if (!success) {
             Log.d("Error creating file.", "");
         }
-
         try
         {
             OutputStream os = new FileOutputStream(file);
@@ -120,7 +116,6 @@ public class PDAudioRecordingManager {
             e.printStackTrace();
         }
 
-        // close file
         try
         {
             dataStream.close();
@@ -135,8 +130,7 @@ public class PDAudioRecordingManager {
     }
 
     private void recordThread() {
-        //don't start until thread is ready. Frames lost otherwise.
-        recorder.startRecording();
+        recorder.startRecording(); //don't start until thread is ready. Frames lost otherwise.
         while (shouldRecord) {
             recordingData = new byte[bufferSize];
             recorder.read(recordingData, 0, recordingData.length);

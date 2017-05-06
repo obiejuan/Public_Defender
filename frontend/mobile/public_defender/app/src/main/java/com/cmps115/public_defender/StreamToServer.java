@@ -25,6 +25,14 @@ import java.net.URL;
 /**
  * Created by bryan on 4/30/17.
  * Streams data to server.
+ *
+ * Using the emulator, your computers IP will actually be
+ *  = 10.0.2.2
+ *
+ * Instead of the usual localhost.
+ *  = 127.0.0.1
+ *
+ *  Which on the emulator, is your phone's loopback interface.
  */
 
 public class StreamToServer {
@@ -35,9 +43,10 @@ public class StreamToServer {
     URL url = null;
     Context context = null;
     JSONObject jsonResponse = null;
-    /*
-        Pass in a recorder object, the urlstring and the current context
-    */
+
+    /***************************
+     *  Pass in a recorder object, the urlstring and the current context
+     */
     StreamToServer(PDAudioRecordingManager recorder, String urlString, Context c){
         streamToServThread = new Thread(new Runnable() {
             public void run() {
@@ -57,9 +66,10 @@ public class StreamToServer {
         }
         context = c;
     }
-    /*
-        stop streaming audio
-    */
+
+    /*******************************
+     *  stop streaming/recording audio
+     */
     public void stopStreamAudio() {
         if (rec != null) {
             rec.stopRecording();
@@ -67,9 +77,12 @@ public class StreamToServer {
             streamToServThread.interrupt();
         }
     }
-    /*
-        start streaming audio
-    */
+
+    /*******************************
+     *  Start stream method:
+     *  Starts the chain of events to create an event
+     *  and stream the audio to the server.
+     */
     public void startStreamAudio(){
         initStreamThread.start();
         try {
@@ -77,10 +90,8 @@ public class StreamToServer {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        Log.d("[START-STREAM-AUDIO]", jsonResponse.toString());
         try {
             url = new URL(url.toString() + jsonResponse.get("upload_token").toString());
-            Log.d("STRING", url.toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -92,35 +103,34 @@ public class StreamToServer {
 
     }
 
+    /*******************************
+     *  Setup Stream/Event:
+     *  Establish an event, verify credentials (unfinished), and
+     *  populates the POST url for the streaming portion.
+     */
     private void initStream() {
         HttpURLConnection conn = null;
         DataOutputStream out = null;
+
+        // test data
         JSONObject j = new JSONObject();
         try {
             j.put("location", "(-97.515678, 35.512363)");
             j.put("user", 1);
         } catch (JSONException e) {
             e.printStackTrace();
-        }
-        Log.d("[STREAM]", url.toString());
-        Log.d("[STREAM]", j.toString());
+        }  // end test data
 
         try {
             conn = (HttpURLConnection) url.openConnection();
-            Log.d("[STREAM]", "1");
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setFixedLengthStreamingMode(j.toString().getBytes().length);
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
-            Log.d("[STREAM]", "2");
             out = new DataOutputStream(conn.getOutputStream());
-            Log.d("[STREAM]", "3");
             out.writeBytes(j.toString());
             out.flush();
             out.close();
-            Log.d("[STREAM]", "4");
-            int responseCode = conn.getResponseCode();
-            Log.d("[STREAM]", String.valueOf(responseCode));
             BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             String inputLine;
             StringBuffer response = new StringBuffer();
@@ -129,10 +139,7 @@ public class StreamToServer {
                 response.append(inputLine);
             }
             in.close();
-            Log.d("[STREAM]", conn.getResponseMessage());
-            Log.d("[STREAM]", response.toString());
             jsonResponse = new JSONObject(response.toString());
-            //resp = in.readUTF();
         }
         // return error to user about unable to connect?
         catch (IOException e) {
@@ -146,16 +153,14 @@ public class StreamToServer {
 
     }
 
-    /*
-        POST data as chunked streaming mode without length header
-        Uses sleep to reduce cpu usage (from 25% at streaming idle to < 3%)
-        Thread is largely passive except for setting up, stopping, reading
-        and finally closing the connection.
-    */
+    /*******************************
+     *  Streaming Function:
+     *  POST data as 'chunked' streaming mode without length header
+     *  Uses sleep to reduce cpu usage (from 25% at streaming idle to < 3%)
+     */
     private void streamToServer() {
         HttpURLConnection conn = null;
         BufferedOutputStream out = null;
-        Log.d("[comm]", "Starting communication thread.");
 
         try {
             conn = (HttpURLConnection) url.openConnection();
@@ -176,9 +181,7 @@ public class StreamToServer {
             byte b[] = new byte[in.available()];
             in.read(b, 0, b.length);
             String resp = new String(b);
-            Log.d("[STREAM]", resp);
         }
-
         // return error to user about unable to connect?
         catch (IOException e) {
             e.printStackTrace();

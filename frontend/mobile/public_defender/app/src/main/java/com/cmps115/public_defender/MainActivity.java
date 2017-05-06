@@ -124,9 +124,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void broadCast(View view) {
         ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION);
-
         Button r_button = (Button)findViewById(R.id.record_button);
-        // Do something in response to Record button
         Context context = getApplicationContext();
         CharSequence text = "Hit Record";
         int duration = Toast.LENGTH_SHORT;
@@ -137,14 +135,15 @@ public class MainActivity extends AppCompatActivity {
         if(!(geo[0] == 0.0 && geo[1] == 0.0))
             Log.d("[GEO]", (geo[0] + ", " + geo[1]));
 
-
         if (!isRecording) {
+            // USAGE EXAMPLE:
             pdarm = new PDAudioRecordingManager();
-            serv = new StreamToServer(pdarm, "http://192.168.1.118:3000/upload/", context);
+            serv = new StreamToServer(pdarm, "http://10.0.2.2:3000/upload/", context);
             serv.startStreamAudio();
             r_button.setText("Stop Recording.");
         }
         if (isRecording) {
+            // USAGE EXAMPLE:
             serv.stopStreamAudio();
             r_button.setText("Record");
         }
