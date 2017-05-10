@@ -4,6 +4,9 @@ var bodyParser = require("body-parser");
 var pgp = require('pg-promise')({});
 const uuid = require('uuid/v4');
 //var connectionString = 'postgres://localhost:5432/pdefender-dev';
+
+
+
 var cn = {
     host: 'localhost',
     port: 5432,
@@ -89,9 +92,19 @@ app.post('/nearby/', function (req, res, next) {
     });
 })
 
-/*
-	Create test users quickly
-*/
+/*****
+ *	                                  Table "public.pd_user"
+  Column  |          Type          |                      Modifiers                       
+----------+------------------------+------------------------------------------------------
+ user_id  | integer                | not null default nextval('pd_user_id_seq'::regclass)
+ auth_key | character varying(255) | 
+ email    | character varying(255) | 
+Indexes:
+    "pd_user_pkey" PRIMARY KEY, btree (user_id)
+Referenced by:
+    TABLE "pd_event" CONSTRAINT "pd_user_id" FOREIGN KEY (pd_user_id) REFERENCES pd_user(user_id)
+ *
+ */
 app.post('/user/new/', function(req, res, next){
 	user = req.body
 	user_promise = db.query('INSERT INTO pd_user (auth_key, email) VALUES ($1, $2)',  [ user.auth_key, user.email ])
@@ -109,6 +122,24 @@ app.post('/user/new/', function(req, res, next){
     });
 })
 
+/* 
+ *   Table "public.pd_event"
+	   Column   |            Type             |                       Modifiers                       
+	------------+-----------------------------+-------------------------------------------------------
+	 event_id   | integer                     | not null default nextval('pd_event_id_seq'::regclass)
+	 location   | point                       | 
+	 pd_user_id | integer                     | not null
+	 active     | boolean                     | not null default true
+	 event_date | timestamp without time zone | not null
+	Indexes:
+	    "pd_event_pkey" PRIMARY KEY, btree (event_id)
+	    "fki_pd_user_id" btree (pd_user_id)
+	Foreign-key constraints:
+	    "pd_user_id" FOREIGN KEY (pd_user_id) REFERENCES pd_user(user_id)
+	Referenced by:
+	    TABLE "pd_recording" CONSTRAINT "pd_recordings_event_id_fkey" FOREIGN KEY (event_id) REFERENCES pd_event(event_id)
+ *
+ */
 app.post('/upload/', function(req, res, next) {
 	/*******************************************************
 		Used as authentication and handshake to begin file
@@ -121,15 +152,24 @@ app.post('/upload/', function(req, res, next) {
 		NOTES: Geolocation data should probably be handled here as well
 		to minimize network requests. 
 	*******************************************************/
+	// filename goes to pd_recording 
+
+
 	console.log(req.body)
 	location = req.body.location 
 	// check user credentials
 	user = req.body.user /// @todo: change to actual credential lookup 
 
 	unique_token = user + '_' + uuid()
-	
-	db.query('INSERT INTO pd_event (pd_user_id, filename, location) VALUES ($1, $2, $3)',  [ user, unique_token + '.wav', location ]) 
-	.then(function () {
+	date = new Date()
+	console.log(date)
+	console.log(date.toUTCString())
+	db.tx(function (t) {
+        return t.one('INSERT INTO  pd_event (pd_user_id, location, active, event_date) VALUES ($1, $2, $3, $4)  RETURNING event_id', [user, location, true, date], c => +c.event_id)
+            .then(function (id) {
+                return t.none('INSERT INTO pd_recording (event_id, filename, )', [id, unique_token]);
+            });
+    }).then(function () {
 		res.status(200)
         .json({
           status: 'success',
@@ -142,7 +182,17 @@ app.post('/upload/', function(req, res, next) {
     });
 })
 
-
+/*
+	Table "public.pd_recording"
+  Column  |          Type          | Modifiers 
+----------+------------------------+-----------
+ event_id | integer                | not null
+ filename | character varying(255) | not null
+Indexes:
+    "pd_recordings_pkey" PRIMARY KEY, btree (event_id, filename)
+Foreign-key constraints:
+    "pd_recordings_event_id_fkey" FOREIGN KEY (event_id) REFERENCES pd_event(event_id)
+*/
 
 app.post('/upload/:id', function(req, res) {
 	/*******************************************************
