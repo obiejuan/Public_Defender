@@ -21,6 +21,9 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 
 /*
 Please note that if you want to change the draw/drop theme for this activity you need to ensure you're setting the contraints.
@@ -33,12 +36,15 @@ public class MainActivity extends AppCompatActivity {
 
     GoogleApiClient mGoogleApiClient;
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
+
+    GeoHandler geoHandler = null;
     PDAudioRecordingManager pdarm;
     StreamToServer serv;
+
     private boolean isRecording = false;
     // Requesting permission to RECORD_AUDIO
     private boolean permissionToRecordAccepted = false;
-    GeoHandler geoHandler = null;
+
     private String[] permissions = {Manifest.permission.RECORD_AUDIO};
 
 
@@ -47,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        geoHandler = new GeoHandler(this);
+
         /*GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 //.requestIdToken("232250430081-nrqnos5eqst3rn7o2r9c8jas6m42i6p5.apps.googleusercontent.com")
@@ -62,6 +68,9 @@ public class MainActivity extends AppCompatActivity {
         String res = String.valueOf(mGoogleApiClient.  isConnected());
 
         Log.d("isconnected: ", res);*/
+        if (geoHandler == null) {
+            geoHandler = new GeoHandler(this);
+        }
 
     }
 
@@ -134,11 +143,19 @@ public class MainActivity extends AppCompatActivity {
         double[] geo = geoHandler.get_geolocation();
         if(!(geo[0] == 0.0 && geo[1] == 0.0))
             Log.d("[GEO]", (geo[0] + ", " + geo[1]));
+        // test data
+        JSONObject json_test = new JSONObject();
+        try {
+            json_test.put("location", String.format("(%f, %f)", geo[1], geo[0]) ); //have to reverse them
+            json_test.put("user", 2);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }  // end test data
 
         if (!isRecording) {
             // USAGE EXAMPLE:
             pdarm = new PDAudioRecordingManager();
-            serv = new StreamToServer(pdarm, "http://10.0.2.2:3000/upload/", context);
+            serv = new StreamToServer(pdarm, "http://192.168.1.118:3000/upload/", context, json_test);
             serv.startStreamAudio();
             r_button.setText("Stop Recording.");
         }

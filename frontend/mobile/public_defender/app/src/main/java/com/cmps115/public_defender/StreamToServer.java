@@ -43,11 +43,12 @@ public class StreamToServer {
     URL url = null;
     Context context = null;
     JSONObject jsonResponse = null;
+    JSONObject jsonRequest = null;
 
     /***************************
      *  Pass in a recorder object, the urlstring and the current context
      */
-    StreamToServer(PDAudioRecordingManager recorder, String urlString, Context c){
+    StreamToServer(PDAudioRecordingManager recorder, String urlString, Context c, JSONObject json){
         streamToServThread = new Thread(new Runnable() {
             public void run() {
                 streamToServer();
@@ -65,6 +66,7 @@ public class StreamToServer {
             e.printStackTrace();
         }
         context = c;
+        jsonRequest = json;
     }
 
     /*******************************
@@ -91,7 +93,8 @@ public class StreamToServer {
             e.printStackTrace();
         }
         try {
-            url = new URL(url.toString() + jsonResponse.get("upload_token").toString());
+
+            url = new URL(url.toString() + jsonResponse.get("url").toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -112,23 +115,16 @@ public class StreamToServer {
         HttpURLConnection conn = null;
         DataOutputStream out = null;
 
-        // test data
-        JSONObject j = new JSONObject();
-        try {
-            j.put("location", "(-97.515678, 35.512363)");
-            j.put("user", 1);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }  // end test data
-
         try {
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Content-Type", "application/json");
-            conn.setFixedLengthStreamingMode(j.toString().getBytes().length);
+            conn.setFixedLengthStreamingMode(jsonRequest.toString().getBytes().length);
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
+            conn.setConnectTimeout(5000); //set timeout to 5 seconds
+
             out = new DataOutputStream(conn.getOutputStream());
-            out.writeBytes(j.toString());
+            out.writeBytes(jsonRequest.toString());
             out.flush();
             out.close();
             BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -141,11 +137,16 @@ public class StreamToServer {
             in.close();
             jsonResponse = new JSONObject(response.toString());
         }
+        catch (java.net.SocketTimeoutException e){
+            // TODO: handle connection issues.
+            return;
+        }
         // return error to user about unable to connect?
         catch (IOException e) {
             e.printStackTrace();
             return;
         }
+
         finally {
             conn.disconnect();
             return;

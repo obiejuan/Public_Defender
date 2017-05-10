@@ -46,7 +46,7 @@ public class PDAudioRecordingManager {
 
     private byte[] recordingData;
 
-    private ArrayList<byte[]> samples;
+    private ArrayList<byte[]> samples; //why do we have this? 
 
     DataOutputStream dataStream;
     DataOutputStream servStream;
@@ -125,7 +125,7 @@ public class PDAudioRecordingManager {
             e.printStackTrace();
         }
 
-        Log.d("Recorded # samples", "" + samples.size());
+        //Log.d("Recorded # samples", "" + samples.size());
         recorder = null;
     }
 
@@ -143,9 +143,10 @@ public class PDAudioRecordingManager {
             }
             catch (Exception e)
             {
+                this.stopRecording();
                 e.printStackTrace();
             }
-            samples.add(recordingData);
+            //samples.add(recordingData); why?
             //Log.d("Sample: ", Arrays.toString(recordingData));
 
 
