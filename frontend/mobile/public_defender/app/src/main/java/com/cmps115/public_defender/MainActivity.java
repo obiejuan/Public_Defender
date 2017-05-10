@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity implements
     private GoogleApiClient mGoogleApiClient;
     private TextView mStatusTextView;
     private ProgressDialog mProgressDialog;
+    private Boolean isSignedIn = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,12 +76,6 @@ public class MainActivity extends AppCompatActivity implements
         signInButton.setSize(SignInButton.SIZE_STANDARD);
         // [END customize_button]
 
-//        mGoogleApiClient.connect();
-//
-//        String res = String.valueOf(mGoogleApiClient.isConnected());
-//
-//        Log.d("isconnected: ", res);
-
     }
 
 
@@ -97,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements
                 new ResultCallback<Status>() {
                     @Override
                     public void onResult(Status status) {
+                        isSignedIn = false;
                         // [START_EXCLUDE]
                         updateUI(false);
                         // [END_EXCLUDE]
@@ -115,6 +111,7 @@ public class MainActivity extends AppCompatActivity implements
             // If the user's cached credentials are valid, the OptionalPendingResult will be "done"
             // and the GoogleSignInResult will be available instantly.
             Log.d(TAG, "Got cached sign-in");
+            isSignedIn = true;
             GoogleSignInResult result = opr.get();
             handleSignInResult(result);
         } else {
@@ -162,9 +159,11 @@ public class MainActivity extends AppCompatActivity implements
             // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
             mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getDisplayName()));
+            isSignedIn = true;
             updateUI(true);
         } else {
             // Signed out, show unauthenticated UI.
+            isSignedIn = false;
             updateUI(false);
         }
     }
@@ -210,17 +209,34 @@ public class MainActivity extends AppCompatActivity implements
 
     public void broadCast(View view) {
         // Do something in response to Record button
-        Context context = getApplicationContext();
-        CharSequence text = "Hit Record";
-        int duration = Toast.LENGTH_SHORT;
-        Toast toast = Toast.makeText(context, text, duration);
-        toast.show();
+
+        if (isSignedIn) {
+            Context context = getApplicationContext();
+            CharSequence text = "Hit Record";
+            int duration = Toast.LENGTH_SHORT;
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+        } else {
+            Context context = getApplicationContext();
+            CharSequence text = "You must sign in";
+            int duration = Toast.LENGTH_SHORT;
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+        }
     }
 
     public void gotoMenu(View view) {
-        Intent intent = new Intent(this, Menu.class);
-        Log.d("Menu", "clicked menu");
-        startActivity(intent);
+        if (isSignedIn) {
+            Intent intent = new Intent(this, Menu.class);
+            Log.d("Menu", "clicked menu");
+            startActivity(intent);
+        } else {
+            Context context = getApplicationContext();
+            CharSequence text = "You must sign in";
+            int duration = Toast.LENGTH_SHORT;
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+        }
     }
 
     public void gotoLogin(View view) {
@@ -230,8 +246,16 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void gotoCurrentEvents(View view) {
-        Intent intent = new Intent(this, CurrentEvents.class);
-        startActivity(intent);
+        if (isSignedIn) {
+            Intent intent = new Intent(this, CurrentEvents.class);
+            startActivity(intent);
+        } else {
+            Context context = getApplicationContext();
+            CharSequence text = "You must sign in";
+            int duration = Toast.LENGTH_SHORT;
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+        }
     }
 
     // [START revokeAccess]
