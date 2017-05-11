@@ -3,7 +3,7 @@ const fs = require('fs')
 var bodyParser = require("body-parser");
 var pgp = require('pg-promise')({});
 const uuid = require('uuid/v4');
-//var connectionString = 'postgres://localhost:5432/pdefender-dev';
+
 
 
 
@@ -15,13 +15,18 @@ var cn = {
     password: 'password'
 };
 var db = pgp(cn);
-
 var app = express()
 
+
+/*******************
+ *	Routes.
+ */
 // only parsing json automatically where needed.
 app.post('/upload/', bodyParser.json())
 app.post('/user/new/', bodyParser.json())
 app.post('/nearby/', bodyParser.json())
+
+
 
 /***********
  *	Helper function for setting up QueryFiles
@@ -35,10 +40,16 @@ function sql(file) {
     return new pgp.QueryFile(file, {minify: true});
 }
 
+
+
 /**********
  *	Setup QueryFiles once at startup
  */
 var stopEvent = sql('./sql_queries/pd_event/update_status.sql');
+var getNearby = sql('./sql_queries/pd_event/get_nearby.sql');
+
+
+
 
 
 
@@ -60,13 +71,22 @@ app.get('/', function (req, res, next) {
 
 // get nearby incidents
 app.post('/nearby/', function (req, res, next) {
+	var ip_regex = new RegExp('((?:[0-9]{1,3}\.?){4})');
+	var r_method = req.method;
+	var r_path = req.path;
+	var r_ipaddr  = req.ip.match(ip_regex)[0];
+	var date_now = Date.now();
+
+	console.log(req);
+	console.log(req.route.path);
+	console.log(req.method);
+	console.log(req.connection.remoteAddress);
+	console.log(`[${r_method}]<${r_path}> ${r_ipaddr}`);
 	var query = {
 		current_location: req.body.location,
 		distance: req.body.distance
 	}
-  	db.any('SELECT event_id, location, active, point($<current_location>) <@> pd_event.location AS event_dist \
-  			FROM pd_event WHERE (point($<current_location>) <@> pd_event.location) < ($<distance>) \
-  			ORDER by event_dist;', query)
+  	db.any(getNearby, query)
     .then(function (data) {
       	res.status(200)
         	.json({
