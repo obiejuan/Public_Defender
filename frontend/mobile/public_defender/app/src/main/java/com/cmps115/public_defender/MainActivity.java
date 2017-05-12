@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -23,6 +24,9 @@ import com.google.android.gms.common.api.Status;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 
 
 /*
@@ -71,6 +75,9 @@ public class MainActivity extends AppCompatActivity {
         if (geoHandler == null) {
             geoHandler = new GeoHandler(this);
         }
+
+
+
 
     }
 
@@ -139,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
         int duration = Toast.LENGTH_SHORT;
         Toast toast = Toast.makeText(context, text, duration);
         toast.show();
-
+        //Handler h = new Handler(){};
         double[] geo = geoHandler.get_geolocation();
         if(!(geo[0] == 0.0 && geo[1] == 0.0))
             Log.d("[GEO]", (geo[0] + ", " + geo[1]));
@@ -182,6 +189,17 @@ public class MainActivity extends AppCompatActivity {
     public void gotoCurrentEvents(View view){
         Intent intent = new Intent(this, CurrentEvents.class);
         startActivity(intent);
+        // get request, yay
+        URL u = null;
+        try {
+            u = new URL("http://169.233.224.14:3000/nearby/");
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        double[] geo = geoHandler.get_geolocation();
+        NearbyFromServer n = new NearbyFromServer(geo, 10, u);
+        JSONObject output = n.getEvents();
+
     }
 
     // Prompt user for permission to record audio

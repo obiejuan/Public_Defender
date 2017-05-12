@@ -47,6 +47,7 @@ function sql(file) {
  */
 var stopEvent = sql('./sql_queries/pd_event/update_status.sql');
 var getNearby = sql('./sql_queries/pd_event/get_nearby.sql');
+var createUser = sql('./sql_queries/pd_user/create.sql');
 
 
 
@@ -121,35 +122,25 @@ Referenced by:
  */
 app.post('/user/new/', function(req, res, next){
 	user = req.body
-	user_promise = db.query('INSERT INTO pd_user (auth_key, email) VALUES ($1, $2)',  [ user.auth_key, user.email ]).then(function (response_db) {
-	  	db.any('select * from pd_user').then(function (data) {
-	      res.status(200)
-	        .json({
-	          	status: 'success',
-	          	data: data
-	      	});
-	    console.log(user_promise);
+
+	user_promise = db.query(createUser, user)
+		.then(function (result) {
+			console.log(result);
+			console.log(user_promise);
+	      	res.status(200)
+	        	.json({
+	        	  	status: 'success',
+	      		});
 		}).catch(function (err) {
 			console.log(err)
-	    	return err;
+	    	//return err;
 	    }).then(function (err) {  // error resonses
 			    res.status(500)
 			        .json({
 			        	status: 'error',
 			          	msg: err,
 			        })
-		}); //end catch of db.any then 
-
-	}).catch(function (err) {
-		console.log(err)
-    	return err;
-    }).then(function (err) {  // error resonses
-		    res.status(500)
-		        .json({
-		        	status: 'error',
-		          	msg: err,
-		        })
-	});
+		}).catch(function() {});
 });
 
 /* 
