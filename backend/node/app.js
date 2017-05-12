@@ -4,9 +4,6 @@ var bodyParser = require("body-parser");
 var pgp = require('pg-promise')({});
 const uuid = require('uuid/v4');
 
-
-
-
 var cn = {
     host: 'localhost',
     port: 5432,
@@ -16,6 +13,35 @@ var cn = {
 };
 var db = pgp(cn);
 var app = express()
+
+/* Payton's middleware logging function */
+var do_log = function (req, res, next) {
+	var ip_regex = new RegExp('((?:[0-9]{1,3}\.?){4})');
+	var r_method = req.method;
+	var r_path = req.path;
+	var r_ipaddr  = req.ip.match(ip_regex)[0];
+	var date = new Date();
+	var curr_date = date.toLocaleString();
+
+	/*
+	 * Log valuable data about the incident 
+	 *   Post or Get request
+	 *   Eventually username
+	 * Write a console logging (middleware) function.
+	 * 
+	 */
+
+	// console.log(req);
+	// console.log(req.route.path);
+	// console.log(req.method);
+	// console.log(req.connection.remoteAddress);
+	console.log(`${curr_date} [${r_method}] request in <${r_path}> by ${r_ipaddr}`);
+
+	next()
+}
+
+// Run the middleware logger.
+app.use(do_log)
 
 
 /*******************
@@ -70,18 +96,12 @@ app.get('/', function (req, res, next) {
 })
 
 // get nearby incidents
+/*
+ * req  - request object
+ * res  - response object
+ * next - next middleware function in app's request-response cycle
+ */
 app.post('/nearby/', function (req, res, next) {
-	var ip_regex = new RegExp('((?:[0-9]{1,3}\.?){4})');
-	var r_method = req.method;
-	var r_path = req.path;
-	var r_ipaddr  = req.ip.match(ip_regex)[0];
-	var date_now = Date.now();
-
-	console.log(req);
-	console.log(req.route.path);
-	console.log(req.method);
-	console.log(req.connection.remoteAddress);
-	console.log(`[${r_method}]<${r_path}> ${r_ipaddr}`);
 	var query = {
 		current_location: req.body.location,
 		distance: req.body.distance
