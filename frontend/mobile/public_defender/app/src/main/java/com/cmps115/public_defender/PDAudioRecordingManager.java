@@ -14,8 +14,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -46,16 +48,16 @@ public class PDAudioRecordingManager {
 
     private byte[] recordingData;
 
-    private ArrayList<byte[]> samples; //why do we have this? 
+    private ArrayList<byte[]> samples; //why do we have this?
 
-    DataOutputStream dataStream;
-    DataOutputStream servStream;
+    private DataOutputStream dataStream;
+    private DataOutputStream servStream;
 
 
     int bufferSize = 0;
+    File currentFile;
 
-    public PDAudioRecordingManager()
-    {
+    public PDAudioRecordingManager() {
         samples = new ArrayList<>();
         bufferSize = BufferElements2Rec * BytesPerElement * 2;
     }
@@ -64,33 +66,26 @@ public class PDAudioRecordingManager {
         recorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT,
                 RECORDER_SAMPLERATE, RECORDER_CHANNELS,
                 RECORDER_AUDIO_ENCODING, bufferSize);
-        File file = createPcmFile(context);
+        currentFile = createPcmFile(context);
         boolean success = false;
-        try
-        {
-            success = file.createNewFile();
-        }
-        catch (Exception e)
-        {
+        try {
+            success = currentFile.createNewFile();
+        } catch (Exception e) {
             e.printStackTrace();
         }
         if (!success) {
             Log.d("Error creating file.", "");
         }
-        try
-        {
-            OutputStream os = new FileOutputStream(file);
+        try {
+            OutputStream os = new FileOutputStream(currentFile);
             BufferedOutputStream outStream = new BufferedOutputStream(os);
             if (pipeOut != null) {
                 servStream = new DataOutputStream(pipeOut); //for streaming to server
                 dataStream = new DataOutputStream(outStream);
-            }
-            else {
+            } else {
                 dataStream = new DataOutputStream(outStream);
             }
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -116,17 +111,14 @@ public class PDAudioRecordingManager {
             e.printStackTrace();
         }
 
-        try
-        {
+        try {
             dataStream.close();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        //Log.d("Recorded # samples", "" + samples.size());
         recorder = null;
+        convertToWav(currentFile);
     }
 
     private void recordThread() {
@@ -134,16 +126,12 @@ public class PDAudioRecordingManager {
         while (shouldRecord) {
             recordingData = new byte[bufferSize];
             recorder.read(recordingData, 0, recordingData.length);
-            try
-            {
+            try {
                 if (servStream != null) {
                     servStream.write(recordingData);
                 }
                 dataStream.write(recordingData);
-            }
-            catch (Exception e)
-            {
-                this.stopRecording();
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             //samples.add(recordingData); why?
@@ -154,14 +142,96 @@ public class PDAudioRecordingManager {
     }
 
     private void convertToWav(File pcmFile) {
+        byte[] pcmData = new byte[(int) pcmFile.length()];
+        DataInputStream input = null;
+        try {
+            input = new DataInputStream(new FileInputStream(pcmFile));
+            input.read(pcmData);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
 
+        int byteRate = RECORDER_SAMPLERATE * RECORDER_CHANNELS * bufferSize / 2;
+
+        byte[] waveHeader = new byte[]
+                {
+                        'R',
+                        'I',
+                        'F',
+                        'F',
+                        (byte) (36 + (pcmData.length & 0xff)),
+                        (byte) ((pcmData.length >> 8) & 0xff),
+                        (byte) ((pcmData.length >> 16) & 0xff),
+                        (byte) ((pcmData.length >> 24) & 0xff),
+                        'W',
+                        'A',
+                        'V',
+                        'E',
+                        'f',
+                        'm',
+                        't',
+                        ' ',
+                        16,
+                        0,
+                        0,
+                        0,
+                        1,
+                        0,
+                        RECORDER_CHANNELS,
+                        0,
+                        (byte) (RECORDER_SAMPLERATE & 0xff),
+                        (byte) ((RECORDER_SAMPLERATE >> 8) & 0xff),
+                        (byte) ((RECORDER_SAMPLERATE >> 16) & 0xff),
+                        (byte) ((RECORDER_SAMPLERATE >> 24) & 0xff),
+                        (byte) (byteRate & 0xff),
+                        (byte) ((byteRate >> 8) & 0xff),
+                        (byte) ((byteRate >> 16) & 0xff),
+                        (byte) ((byteRate >> 24) & 0xff),
+                        (byte) (2 * 16 / 8),
+                        0,
+                        16,
+                        0,
+                        'd',
+                        'a',
+                        't',
+                        'a',
+                        (byte) (pcmData.length & 0xff),
+                        (byte) ((pcmData.length >> 8) & 0xff),
+                        (byte) ((pcmData.length >> 16) & 0xff),
+                        (byte) ((pcmData.length >> 24) & 0xff)
+                };
+
+        DataOutputStream wavStream;
+        try {
+            File wavFile = new File(pcmFile.getPath().substring(0, pcmFile.getPath().length() - 4) + ".wav");
+            wavFile.createNewFile();
+            OutputStream os = new FileOutputStream(wavFile);
+            BufferedOutputStream outStream = new BufferedOutputStream(os);
+            wavStream = new DataOutputStream(outStream);
+
+            wavStream.write(waveHeader);
+            wavStream.write(pcmData);
+            wavStream.close();
+            pcmFile.delete();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 
     /* Returns a file located at our app's external cache directory */
-    public File createPcmFile(Context context) {
+    private File createPcmFile(Context context) {
         //File file = null;
         String timeStamp = new SimpleDateFormat("MM-dd-yyyy_HH-mm", Locale.US).format(new Date());
-        return(new File (context.getExternalCacheDir().getAbsolutePath() + "/" + timeStamp + ".pcm"));
+        return (new File(context.getExternalCacheDir().getAbsolutePath() + "/" + timeStamp + ".pcm"));
     }
 }
