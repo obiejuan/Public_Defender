@@ -4,6 +4,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -27,9 +28,9 @@ This means that you will need to hit the little golden stars after you place an 
 -Oliver
  */
 
-public class MainActivity extends AppCompatActivity implements
-        GoogleApiClient.OnConnectionFailedListener,
-        View.OnClickListener {
+public class MainActivity extends FragmentActivity implements
+                                GoogleApiClient.OnConnectionFailedListener,
+                                                        View.OnClickListener {
 
     private static final String TAG = "SignInActivity";
     private static final int RC_SIGN_IN = 9001;
@@ -115,6 +116,7 @@ public class MainActivity extends AppCompatActivity implements
             GoogleSignInResult result = opr.get();
             handleSignInResult(result);
         } else {
+            Log.d(TAG, "onStart: Did not cache sign-in");
             // If the user has not previously signed in on this device or the sign-in has expired,
             // this asynchronous branch will attempt to sign in the user silently.  Cross-device
             // single sign-on will occur in this branch.
@@ -155,10 +157,13 @@ public class MainActivity extends AppCompatActivity implements
     // [START handleSignInResult]
     private void handleSignInResult(GoogleSignInResult result) {
         Log.d(TAG, "handleSignInResult:" + result.isSuccess());
+        Log.d(TAG, "handleSignInResult: " + result.getStatus().toString());
         if (result.isSuccess()) {
             // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
             mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getDisplayName()));
+            Log.d(TAG, "handleSignInResult: "+ acct.getEmail());
+            Log.d(TAG, "handleSignInResult: "+ acct.getId());
             isSignedIn = true;
             updateUI(true);
         } else {
@@ -197,14 +202,14 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    public void checkAndSignOut(View view) {
+   /* public void checkAndSignOut(View view) {
         if (mGoogleApiClient.isConnected()) {
             signOut();
             Intent intent = new Intent(this, LoginActivity.class);
             startActivity(intent);
             //signIn();
         }
-    }
+    }*/
 
 
     public void broadCast(View view) {
@@ -239,11 +244,11 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    public void gotoLogin(View view) {
+   /* public void gotoLogin(View view) {
         Intent intent = new Intent(this, LoginActivity.class);
         Log.d("Menu", "clicked menu");
         startActivity(intent);
-    }
+    }*/
 
     public void gotoCurrentEvents(View view) {
         if (isSignedIn) {
