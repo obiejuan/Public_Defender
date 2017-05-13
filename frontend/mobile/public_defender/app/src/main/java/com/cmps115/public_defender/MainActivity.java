@@ -1,12 +1,16 @@
 package com.cmps115.public_defender;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements
     private GoogleApiClient mGoogleApiClient;
     private TextView mStatusTextView;
     private ProgressDialog mProgressDialog;
+    private boolean mBroadcasting = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -209,12 +214,31 @@ public class MainActivity extends AppCompatActivity implements
 
 
     public void broadCast(View view) {
-        // Do something in response to Record button
-        Context context = getApplicationContext();
-        CharSequence text = "Hit Record";
-        int duration = Toast.LENGTH_SHORT;
-        Toast toast = Toast.makeText(context, text, duration);
-        toast.show();
+        final Button recordButton = (Button) view;
+        if(mBroadcasting) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("Are you sure you want to stop broadcasting?");
+            builder.setCancelable(true);
+            builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    recordButton.setBackgroundColor(Color.GREEN);
+                    recordButton.setText("Record");
+                    mBroadcasting = false;
+                }
+            });
+            builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                }
+            });
+            AlertDialog alert = builder.create();
+            alert.show();
+        }
+        else {
+            recordButton.setBackgroundColor(Color.RED);
+            recordButton.setText("Broadcasting..");
+            mBroadcasting = true;
+        }
+
     }
 
     public void gotoMenu(View view) {
