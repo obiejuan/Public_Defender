@@ -1,10 +1,15 @@
 package com.cmps115.public_defender;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -25,31 +30,46 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
-
+import org.json.JSONException;
+import org.json.JSONObject;
 /*
 Please note that if you want to change the draw/drop theme for this activity you need to ensure you're setting the contraints.
 This means that you will need to hit the little golden stars after you place an element. It is the bar above the drag/drop editor.
 -Oliver
  */
 
-public class MainActivity extends FragmentActivity implements
-                                GoogleApiClient.OnConnectionFailedListener,
+public class MainActivity extends AppCompatActivity implements
+                                    GoogleApiClient.OnConnectionFailedListener,
                                                         View.OnClickListener {
 
     private static final String TAG = "SignInActivity";
     private static final int RC_SIGN_IN = 9001;
 
-    private GoogleApiClient mGoogleApiClient;
+    GoogleApiClient mGoogleApiClient;
+    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
+    GeoHandler geoHandler = null;
+    PDAudioRecordingManager pdarm;
+    StreamToServer serv;
+    private boolean isRecording = false;
+
+    // Requesting permission to RECORD_AUDIO
+    private boolean permissionToRecordAccepted = false;
+    private String[] permissions = {Manifest.permission.RECORD_AUDIO};
+
+// merged
     private TextView mStatusTextView;
     private ProgressDialog mProgressDialog;
     private boolean mBroadcasting = false;
     private Boolean isSignedIn = false;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        if (geoHandler == null) {
+            geoHandler = new GeoHandler(this);
+        }
         // Views
         mStatusTextView = (TextView) findViewById(R.id.status);
 
@@ -82,8 +102,9 @@ public class MainActivity extends FragmentActivity implements
         signInButton.setSize(SignInButton.SIZE_STANDARD);
         // [END customize_button]
 
-    }
+	//merged
 
+    }
 
     // [START signIn]
     private void signIn() {
@@ -135,7 +156,12 @@ public class MainActivity extends FragmentActivity implements
             });
         }
     }
-
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        // An unresolvable error has occurred and Google APIs (including Sign-In) will not
+        // be available.
+        Log.d(TAG, "onConnectionFailed:" + connectionResult);
+    }
 
     @Override
     protected void onResume() {
@@ -215,8 +241,43 @@ public class MainActivity extends FragmentActivity implements
             //signIn();
         }
     }*/
+   public void broadCast(View view) {
+       ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION);
+       Button r_button = (Button)findViewById(R.id.record_button);
+       Context context = getApplicationContext();
+       CharSequence text = "Hit Record";
+       int duration = Toast.LENGTH_SHORT;
+       Toast toast = Toast.makeText(context, text, duration);
+       toast.show();
 
+       double[] geo = geoHandler.get_geolocation();
+       if(!(geo[0] == 0.0 && geo[1] == 0.0))
+           Log.d("[GEO]", (geo[0] + ", " + geo[1]));
+       // test data
+       JSONObject json_test = new JSONObject();
+       try {
+           json_test.put("location", String.format("(%f, %f)", geo[1], geo[0]) ); //have to reverse them
+           json_test.put("user", 2);
+       } catch (JSONException e) {
+           e.printStackTrace();
+       }  // end test data
 
+       if (!isRecording) {
+           // USAGE EXAMPLE:
+           pdarm = new PDAudioRecordingManager();
+           serv = new StreamToServer(pdarm, "http://192.168.1.118:3000/upload/", context, json_test);
+           serv.startStreamAudio();
+           r_button.setText("Stop Recording.");
+       }
+       if (isRecording) {
+           // USAGE EXAMPLE:
+           serv.stopStreamAudio();
+           r_button.setText("Record");
+       }
+       isRecording = !isRecording;
+   }
+
+/*
     public void broadCast(View view) {
         final Button recordButton = (Button) view;
         if(mBroadcasting) {
@@ -244,6 +305,7 @@ public class MainActivity extends FragmentActivity implements
         }
 
     }
+*/
 
     public void gotoMenu(View view) {
         if (isSignedIn) {
@@ -292,12 +354,6 @@ public class MainActivity extends FragmentActivity implements
     }
     // [END revokeAccess]
 
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        // An unresolvable error has occurred and Google APIs (including Sign-In) will not
-        // be available.
-        Log.d(TAG, "onConnectionFailed:" + connectionResult);
-    }
 
     @Override
     protected void onStop() {
@@ -321,6 +377,19 @@ public class MainActivity extends FragmentActivity implements
                 revokeAccess();
                 break;
         }
+    }
+
+    // Prompt user for permission to record audio
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode){
+            case REQUEST_RECORD_AUDIO_PERMISSION:
+                permissionToRecordAccepted  = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                break;
+        }
+        if (!permissionToRecordAccepted ) finish();
+
     }
 
 }
