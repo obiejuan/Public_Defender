@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -31,9 +32,9 @@ This means that you will need to hit the little golden stars after you place an 
 -Oliver
  */
 
-public class MainActivity extends AppCompatActivity implements
-        GoogleApiClient.OnConnectionFailedListener,
-        View.OnClickListener {
+public class MainActivity extends FragmentActivity implements
+                                GoogleApiClient.OnConnectionFailedListener,
+                                                        View.OnClickListener {
 
     private static final String TAG = "SignInActivity";
     private static final int RC_SIGN_IN = 9001;
@@ -42,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements
     private TextView mStatusTextView;
     private ProgressDialog mProgressDialog;
     private boolean mBroadcasting = false;
+    private Boolean isSignedIn = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,12 +82,6 @@ public class MainActivity extends AppCompatActivity implements
         signInButton.setSize(SignInButton.SIZE_STANDARD);
         // [END customize_button]
 
-//        mGoogleApiClient.connect();
-//
-//        String res = String.valueOf(mGoogleApiClient.isConnected());
-//
-//        Log.d("isconnected: ", res);
-
     }
 
 
@@ -102,6 +98,7 @@ public class MainActivity extends AppCompatActivity implements
                 new ResultCallback<Status>() {
                     @Override
                     public void onResult(Status status) {
+                        isSignedIn = false;
                         // [START_EXCLUDE]
                         updateUI(false);
                         // [END_EXCLUDE]
@@ -120,9 +117,11 @@ public class MainActivity extends AppCompatActivity implements
             // If the user's cached credentials are valid, the OptionalPendingResult will be "done"
             // and the GoogleSignInResult will be available instantly.
             Log.d(TAG, "Got cached sign-in");
+            isSignedIn = true;
             GoogleSignInResult result = opr.get();
             handleSignInResult(result);
         } else {
+            Log.d(TAG, "onStart: Did not cache sign-in");
             // If the user has not previously signed in on this device or the sign-in has expired,
             // this asynchronous branch will attempt to sign in the user silently.  Cross-device
             // single sign-on will occur in this branch.
@@ -163,13 +162,18 @@ public class MainActivity extends AppCompatActivity implements
     // [START handleSignInResult]
     private void handleSignInResult(GoogleSignInResult result) {
         Log.d(TAG, "handleSignInResult:" + result.isSuccess());
+        Log.d(TAG, "handleSignInResult: " + result.getStatus().toString());
         if (result.isSuccess()) {
             // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
             mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getDisplayName()));
+            Log.d(TAG, "handleSignInResult: "+ acct.getEmail());
+            Log.d(TAG, "handleSignInResult: "+ acct.getId());
+            isSignedIn = true;
             updateUI(true);
         } else {
             // Signed out, show unauthenticated UI.
+            isSignedIn = false;
             updateUI(false);
         }
     }
@@ -203,14 +207,14 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    public void checkAndSignOut(View view) {
+   /* public void checkAndSignOut(View view) {
         if (mGoogleApiClient.isConnected()) {
             signOut();
             Intent intent = new Intent(this, LoginActivity.class);
             startActivity(intent);
             //signIn();
         }
-    }
+    }*/
 
 
     public void broadCast(View view) {
@@ -242,20 +246,36 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void gotoMenu(View view) {
-        Intent intent = new Intent(this, Menu.class);
-        Log.d("Menu", "clicked menu");
-        startActivity(intent);
+        if (isSignedIn) {
+            Intent intent = new Intent(this, Menu.class);
+            Log.d("Menu", "clicked menu");
+            startActivity(intent);
+        } else {
+            Context context = getApplicationContext();
+            CharSequence text = "You must sign in";
+            int duration = Toast.LENGTH_SHORT;
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+        }
     }
 
-    public void gotoLogin(View view) {
+   /* public void gotoLogin(View view) {
         Intent intent = new Intent(this, LoginActivity.class);
         Log.d("Menu", "clicked menu");
         startActivity(intent);
-    }
+    }*/
 
     public void gotoCurrentEvents(View view) {
-        Intent intent = new Intent(this, CurrentEvents.class);
-        startActivity(intent);
+        if (isSignedIn) {
+            Intent intent = new Intent(this, CurrentEvents.class);
+            startActivity(intent);
+        } else {
+            Context context = getApplicationContext();
+            CharSequence text = "You must sign in";
+            int duration = Toast.LENGTH_SHORT;
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+        }
     }
 
     // [START revokeAccess]
