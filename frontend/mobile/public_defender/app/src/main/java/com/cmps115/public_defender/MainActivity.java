@@ -1,19 +1,14 @@
 package com.cmps115.public_defender;
 
 import android.Manifest;
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -63,7 +58,8 @@ public class MainActivity extends AppCompatActivity implements
     private Boolean isSignedIn = false;
 
     // Set this = your local ip
-    private String yourIP = "169.233.243.228";
+    private final String externalServerIP = "138.68.200.193";
+    private final String externalServerPort = "3000";
 
 
     @Override
@@ -268,7 +264,7 @@ public class MainActivity extends AppCompatActivity implements
        if (!isRecording) {
            // USAGE EXAMPLE:
            pdarm = new PDAudioRecordingManager();
-           serv = new StreamToServer(pdarm, "http://" + yourIP + ":3000/upload/", context, json_test);
+           serv = new StreamToServer(pdarm, "http://" + externalServerIP + ":"  + externalServerPort + "/upload/", context, json_test);
            serv.startStreamAudio();
            r_button.setText("Stop Recording.");
        }
