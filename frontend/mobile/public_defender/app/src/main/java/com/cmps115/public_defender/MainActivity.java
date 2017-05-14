@@ -62,6 +62,9 @@ public class MainActivity extends AppCompatActivity implements
     private boolean mBroadcasting = false;
     private Boolean isSignedIn = false;
 
+    // Set this = your local ip
+    private String yourIP = "169.233.243.228";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -265,7 +268,7 @@ public class MainActivity extends AppCompatActivity implements
        if (!isRecording) {
            // USAGE EXAMPLE:
            pdarm = new PDAudioRecordingManager();
-           serv = new StreamToServer(pdarm, "http://192.168.1.118:3000/upload/", context, json_test);
+           serv = new StreamToServer(pdarm, "http://" + yourIP + ":3000/upload/", context, json_test);
            serv.startStreamAudio();
            r_button.setText("Stop Recording.");
        }
