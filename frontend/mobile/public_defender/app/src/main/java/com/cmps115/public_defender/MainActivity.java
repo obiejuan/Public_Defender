@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -42,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements
 
     GoogleApiClient mGoogleApiClient;
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
+    private static final int REQUEST_LOCATION_FINE_PERMISSION = 420;
     GeoHandler geoHandler = null;
     PDAudioRecordingManager pdarm;
     StreamToServer serv;
@@ -66,9 +68,6 @@ public class MainActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        if (geoHandler == null) {
-            geoHandler = new GeoHandler(this);
-        }
         // Views
         mStatusTextView = (TextView) findViewById(R.id.status);
 
@@ -102,8 +101,8 @@ public class MainActivity extends AppCompatActivity implements
         // [END customize_button]
 
 	//merged
-
     }
+
 
     // [START signIn]
     private void signIn() {
@@ -132,6 +131,9 @@ public class MainActivity extends AppCompatActivity implements
     public void onStart() {
         super.onStart();
 
+        // Ask for the initial permission
+        askForPermission(Manifest.permission.RECORD_AUDIO, REQUEST_RECORD_AUDIO_PERMISSION);
+
         OptionalPendingResult<GoogleSignInResult> opr = Auth.GoogleSignInApi.silentSignIn(mGoogleApiClient);
         if (opr.isDone()) {
             // If the user's cached credentials are valid, the OptionalPendingResult will be "done"
@@ -153,6 +155,10 @@ public class MainActivity extends AppCompatActivity implements
                     handleSignInResult(googleSignInResult);
                 }
             });
+        }
+
+        if (geoHandler == null) {
+            geoHandler = new GeoHandler(this);
         }
     }
     @Override
@@ -241,7 +247,7 @@ public class MainActivity extends AppCompatActivity implements
         }
     }*/
    public void broadCast(View view) {
-       ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION);
+       if(! permissionToRecordAccepted) return;
        Button r_button = (Button)findViewById(R.id.record_button);
        Context context = getApplicationContext();
        CharSequence text = "Hit Record";
@@ -249,7 +255,7 @@ public class MainActivity extends AppCompatActivity implements
        Toast toast = Toast.makeText(context, text, duration);
        toast.show();
 
-       double[] geo = geoHandler.get_geolocation();
+       double[] geo = {0.0, 0.0};
        if(!(geo[0] == 0.0 && geo[1] == 0.0))
            Log.d("[GEO]", (geo[0] + ", " + geo[1]));
        // test data
@@ -378,17 +384,34 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
+    // Setup the required premissions
+    private void askForPermission(String PERMISSION, int CALLBACK_CODE) {
+        // Here, thisActivity is the current activity
+        if (ContextCompat.checkSelfPermission(this, PERMISSION) != PackageManager.PERMISSION_GRANTED) {
+            if (!ActivityCompat.shouldShowRequestPermissionRationale(this, PERMISSION)) {
+                ActivityCompat.requestPermissions(this, new String[]{PERMISSION}, CALLBACK_CODE);
+            }
+        }
+    }
+
     // Prompt user for permission to record audio
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode){
             case REQUEST_RECORD_AUDIO_PERMISSION:
-                permissionToRecordAccepted  = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                permissionToRecordAccepted  = (grantResults[0] == PackageManager.PERMISSION_GRANTED);
+
+                // Request the next premission (cascading due to its asynch nature)
+                askForPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_LOCATION_FINE_PERMISSION);
+                break;
+            case REQUEST_LOCATION_FINE_PERMISSION:
+                Log.d("Geolocation permission", "Allowed: " + (grantResults[0] == PackageManager.PERMISSION_GRANTED));
+                Log.d("Has location on", "Location on: " + geoHandler.hasLocationOn());
+                double[] location = geoHandler.getGeolocation();
+                Log.d("Geolocation", "Lat: " + location[0] + " Long: " + location[1]);
                 break;
         }
         if (!permissionToRecordAccepted ) finish();
-
     }
-
 }
