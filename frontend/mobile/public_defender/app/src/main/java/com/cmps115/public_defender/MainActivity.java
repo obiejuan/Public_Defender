@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements
     private TextView mStatusTextView;
     private ProgressDialog mProgressDialog;
     private boolean mBroadcasting = false;
+    private boolean isSignedIn = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -214,6 +215,17 @@ public class MainActivity extends AppCompatActivity implements
 
 
     public void broadCast(View view) {
+        // Do something in response to Record button
+        if (!isSignedIn)
+        {
+            Context context = getApplicationContext();
+            CharSequence text = "You must sign in";
+            int duration = Toast.LENGTH_SHORT;
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
+            return;
+        }
+
         final Button recordButton = (Button) view;
         if(mBroadcasting) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -221,9 +233,10 @@ public class MainActivity extends AppCompatActivity implements
             builder.setCancelable(true);
             builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
-                    recordButton.setBackgroundColor(Color.GREEN);
+                    recordButton.setBackgroundColor(Color.RED);
                     recordButton.setText("Record");
                     mBroadcasting = false;
+                    endRecording();
                 }
             });
             builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -234,13 +247,22 @@ public class MainActivity extends AppCompatActivity implements
             alert.show();
         }
         else {
-            recordButton.setBackgroundColor(Color.RED);
+            recordButton.setBackgroundColor(Color.GRAY);
             recordButton.setText("Broadcasting..");
             mBroadcasting = true;
+            startRecording();
         }
-
     }
 
+    public void startRecording()
+    {
+        // RECORDING LOGIC GOES HERE
+    }
+
+    public void endRecording()
+    {
+        // END RECORDING LOGIC GOES HERE
+    }
     public void gotoMenu(View view) {
         Intent intent = new Intent(this, Menu.class);
         Log.d("Menu", "clicked menu");
