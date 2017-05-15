@@ -3,11 +3,14 @@ package com.cmps115.public_defender;
 import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -49,11 +52,11 @@ public class MainActivity extends AppCompatActivity implements
     StreamToServer serv;
     private boolean isRecording = false;
 
-    // Requesting permission to RECORD_AUDIO
+    // Requesting permissions
     private boolean permissionToRecordAccepted = false;
-    private String[] permissions = {Manifest.permission.RECORD_AUDIO};
+    private boolean permissionForLocationAccepted = false;
 
-// merged
+    // merged
     private TextView mStatusTextView;
     private ProgressDialog mProgressDialog;
     private boolean mBroadcasting = false;
@@ -246,8 +249,10 @@ public class MainActivity extends AppCompatActivity implements
             //signIn();
         }
     }*/
+
    public void broadCast(View view) {
-       if(! permissionToRecordAccepted) return;
+       if(!permissionToRecordAccepted || !permissionForLocationAccepted) return;
+
        Button r_button = (Button)findViewById(R.id.record_button);
        Context context = getApplicationContext();
        CharSequence text = "Hit Record";
@@ -255,7 +260,11 @@ public class MainActivity extends AppCompatActivity implements
        Toast toast = Toast.makeText(context, text, duration);
        toast.show();
 
+       // Get the geolocation
        double[] geo = {0.0, 0.0};
+       if(geoHandler.hasLocationOn())
+           geo = geoHandler.getGeolocation();
+
        if(!(geo[0] == 0.0 && geo[1] == 0.0))
            Log.d("[GEO]", (geo[0] + ", " + geo[1]));
        // test data
@@ -282,35 +291,35 @@ public class MainActivity extends AppCompatActivity implements
        isRecording = !isRecording;
    }
 
-/*
-    public void broadCast(View view) {
-        final Button recordButton = (Button) view;
-        if(mBroadcasting) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("Are you sure you want to stop broadcasting?");
-            builder.setCancelable(true);
-            builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    recordButton.setBackgroundColor(Color.GREEN);
-                    recordButton.setText("Record");
-                    mBroadcasting = false;
-                }
-            });
-            builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                }
-            });
-            AlertDialog alert = builder.create();
-            alert.show();
-        }
-        else {
-            recordButton.setBackgroundColor(Color.RED);
-            recordButton.setText("Broadcasting..");
-            mBroadcasting = true;
-        }
-
-    }
-*/
+//    public void broadCast(View view) {
+//        if(!permissionToRecordAccepted || !permissionForLocationAccepted) return;
+//
+//        final Button recordButton = (Button) view;
+//        if(mBroadcasting) {
+//            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//            builder.setMessage("Are you sure you want to stop broadcasting?");
+//            builder.setCancelable(true);
+//            builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+//                public void onClick(DialogInterface dialog, int id) {
+//                    recordButton.setBackgroundColor(Color.RED);
+//                    recordButton.setText("Record");
+//                    mBroadcasting = false;
+//                }
+//            });
+//            builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+//                public void onClick(DialogInterface dialog, int id) {
+//                }
+//            });
+//            AlertDialog alert = builder.create();
+//            alert.show();
+//        }
+//        else {
+//            recordButton.setBackgroundColor(Color.GRAY);
+//            recordButton.setText("Broadcasting..");
+//            mBroadcasting = true;
+//        }
+//
+//    }
 
     public void gotoMenu(View view) {
         if (isSignedIn) {
@@ -402,13 +411,15 @@ public class MainActivity extends AppCompatActivity implements
             case REQUEST_RECORD_AUDIO_PERMISSION:
                 permissionToRecordAccepted  = (grantResults[0] == PackageManager.PERMISSION_GRANTED);
 
-                // Request the next premission (cascading due to its asynch nature)
+                // Request the next premission (cascading due to its async nature)
                 askForPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_LOCATION_FINE_PERMISSION);
                 break;
             case REQUEST_LOCATION_FINE_PERMISSION:
+                permissionForLocationAccepted = (grantResults[0] == PackageManager.PERMISSION_GRANTED);
+                double[] location = geoHandler.getGeolocation();
+                // Debug info
                 Log.d("Geolocation permission", "Allowed: " + (grantResults[0] == PackageManager.PERMISSION_GRANTED));
                 Log.d("Has location on", "Location on: " + geoHandler.hasLocationOn());
-                double[] location = geoHandler.getGeolocation();
                 Log.d("Geolocation", "Lat: " + location[0] + " Long: " + location[1]);
                 break;
         }

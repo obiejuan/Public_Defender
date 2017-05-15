@@ -20,9 +20,12 @@ import android.widget.Toast;
  * .....
  *   public void geoButtonPressed(View v)
      {
-         double[] geo = geoHandler.getGeolocation();
+         double[] geo = {0.0, 0.0};
+         if(geoHandler.hasLocationOn())
+            geo = geoHandler.getGeolocation();
+
          if(!(geo[0] == 0.0 && geo[1] == 0.0))
-         view_text.setText(geo[0] + ", " + geo[1]);
+            view_text.setText(geo[0] + ", " + geo[1]);
      }
  *
  *
