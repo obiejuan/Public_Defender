@@ -1,6 +1,7 @@
 package com.cmps115.public_defender;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -22,32 +23,17 @@ import java.util.List;
 
 public class CurrentEvents extends Activity {
     Context current_context = null;
+    ProgressDialog progress;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_current_events);
-        ListView listview = (ListView) findViewById(R.id.current_events);
-        String[] values = new String[] { "Pulled over at dank memes", "Getting pulled over melt steel beams", "Oww", "Six angry men" , "Getting pulled over melt steel beams", "Oww", "Six angry men" , "Getting pulled over melt steel beams", "Oww", "Six angry men" , "Getting pulled over melt steel beams", "Oww", "Six angry men" };
-        // Get the geolocation
-        current_context = this.getApplicationContext();
-        double[] geo = {0.0, 0.0};
-        String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
-
-        JSONObject jsonRequest = new JSONObject();
-        try {
-            jsonRequest.put("location", geo_data);
-            jsonRequest.put("distance", 10); //TODO hardcoded distance
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        new getNearbyEvents().execute(jsonRequest);
-
-        final ArrayList<String> list = new ArrayList<String>();
-        for (int i = 0; i < values.length; ++i) {
-            list.add(values[i]);
-        }
-        final CustomArrayAdaptor adapter = new CustomArrayAdaptor(this, android.R.layout.simple_list_item_1, list);
-        listview.setAdapter(adapter);
+        findCurrentEventsOnServer();
+        progress = new ProgressDialog(this);
+        progress.setTitle("Finding nearby events..");
+        progress.setMessage("Hold on while we search..");
+        progress.setCancelable(false);
+        progress.show();
     }
 
     private class CustomArrayAdaptor extends ArrayAdapter<String> {
@@ -80,16 +66,51 @@ public class CurrentEvents extends Activity {
     }
 
     public void refresh(View view) {
-
+        findCurrentEventsOnServer();
+        progress = new ProgressDialog(this);
+        progress.setTitle("Finding nearby events..");
+        progress.setMessage("Hold on while we search..");
+        progress.setCancelable(false);
+        progress.show();
     }
+
+    private void findCurrentEventsOnServer()
+    {
+        double[] geo = {0.0, 0.0};
+        String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
+
+        JSONObject jsonRequest = new JSONObject();
+        try {
+            jsonRequest.put("location", geo_data);
+            jsonRequest.put("distance", 100); //TODO hardcoded distance
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        new getNearbyEvents().execute(jsonRequest);
+    }
+
+    private void populateListViewWithCurrentEvents()
+    {
+        ListView listview = (ListView) findViewById(R.id.current_events);
+        String[] values = {"Test1", "Test2"};
+        final ArrayList<String> list = new ArrayList<String>();
+        for (int i = 0; i < values.length; ++i) {
+            list.add(values[i]);
+        }
+
+        final CustomArrayAdaptor adapter = new CustomArrayAdaptor(this, android.R.layout.simple_list_item_1, list);
+        listview.setAdapter(adapter);
+    }
+
     //unfinished
     private class getNearbyEvents extends AsyncTask<JSONObject, Integer, JSONObject> {
         protected JSONObject doInBackground(JSONObject...input_json) {
+
             int number_req = input_json.length;
             JSONObject input = input_json[number_req-1]; //only process the last (most recent) request
             URL url = null;
             try {
-                url = new URL("http://10.0.2.2:3000/nearby/");
+                url = new URL("http://138.68.200.193:3000/nearby/");
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
@@ -104,6 +125,8 @@ public class CurrentEvents extends Activity {
         }
 
         protected void onPostExecute(JSONObject result) {
+            if(progress != null) progress.dismiss();
+            populateListViewWithCurrentEvents();
             // what to do after it's done. Maybe update the UI thread?
             Log.d("[onPostExecute]", result.toString());
             int duration = Toast.LENGTH_LONG;
