@@ -3,23 +3,44 @@ package com.cmps115.public_defender;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class CurrentEvents extends Activity {
-
+    Context current_context = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_current_events);
         ListView listview = (ListView) findViewById(R.id.current_events);
         String[] values = new String[] { "Pulled over at dank memes", "Getting pulled over melt steel beams", "Oww", "Six angry men" , "Getting pulled over melt steel beams", "Oww", "Six angry men" , "Getting pulled over melt steel beams", "Oww", "Six angry men" , "Getting pulled over melt steel beams", "Oww", "Six angry men" };
+        // Get the geolocation
+        current_context = this.getApplicationContext();
+        double[] geo = {0.0, 0.0};
+        String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
+
+        JSONObject jsonRequest = new JSONObject();
+        try {
+            jsonRequest.put("location", geo_data);
+            jsonRequest.put("distance", 10); //TODO hardcoded distance
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        new getNearbyEvents().execute(jsonRequest);
 
         final ArrayList<String> list = new ArrayList<String>();
         for (int i = 0; i < values.length; ++i) {
@@ -60,5 +81,34 @@ public class CurrentEvents extends Activity {
 
     public void refresh(View view) {
 
+    }
+    //unfinished
+    private class getNearbyEvents extends AsyncTask<JSONObject, Integer, JSONObject> {
+        protected JSONObject doInBackground(JSONObject...input_json) {
+            int number_req = input_json.length;
+            JSONObject input = input_json[number_req-1]; //only process the last (most recent) request
+            URL url = null;
+            try {
+                url = new URL("http://10.0.2.2:3000/nearby/");
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            GetNearby req = new GetNearby();
+            JSONObject output = req.makeRequest(input, url);
+            Log.d("[getNearbyEvents]", output.toString());
+            return output;
+        }
+
+        protected void onProgressUpdate(Integer... progress) {
+            // not sure there's gonna be a use for this...
+        }
+
+        protected void onPostExecute(JSONObject result) {
+            // what to do after it's done. Maybe update the UI thread?
+            Log.d("[onPostExecute]", result.toString());
+            int duration = Toast.LENGTH_LONG;
+            Toast toast = Toast.makeText(current_context, "Nearby events received.", duration);
+            toast.show();
+        }
     }
 }
