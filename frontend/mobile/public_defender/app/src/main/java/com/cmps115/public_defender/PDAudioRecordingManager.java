@@ -62,11 +62,11 @@ public class PDAudioRecordingManager {
         bufferSize = BufferElements2Rec * BytesPerElement * 2;
     }
 
-    void startRecording(Context context, BufferedOutputStream pipeOut) { //pipeOut to null if nothing
+    void startRecording(String output_dir, BufferedOutputStream pipeOut) { //pipeOut to null if nothing
         recorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT,
                 RECORDER_SAMPLERATE, RECORDER_CHANNELS,
                 RECORDER_AUDIO_ENCODING, bufferSize);
-        currentFile = createPcmFile(context);
+        currentFile = createPcmFile(output_dir);
         boolean success = false;
         try {
             success = currentFile.createNewFile();
@@ -229,9 +229,9 @@ public class PDAudioRecordingManager {
 
 
     /* Returns a file located at our app's external cache directory */
-    private File createPcmFile(Context context) {
+    private File createPcmFile(String output_dir) {
         //File file = null;
         String timeStamp = new SimpleDateFormat("MM-dd-yyyy_HH-mm", Locale.US).format(new Date());
-        return (new File(context.getExternalCacheDir().getAbsolutePath() + "/" + timeStamp + ".pcm"));
+        return (new File(output_dir + "/" + timeStamp + ".pcm"));
     }
 }

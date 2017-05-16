@@ -1,9 +1,11 @@
 package com.cmps115.public_defender;
 
-
+import android.app.Service;
 import android.content.Context;
+import android.content.Intent;
+import android.os.Binder;
+import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -11,47 +13,32 @@ import org.json.JSONObject;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PipedInputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-/**
- *
- *  DEPRECATED -- USE STREAMAUDIO SERVICE
- *
- * Created by bryan on 4/30/17.
- * Streams data to server.
- *
- * Using the emulator, your computers IP will actually be
- *  = 10.0.2.2
- *
- * Instead of the usual localhost.
- *  = 127.0.0.1
- *
- *  Which on the emulator, is your phone's loopback interface.
- */
+public class StreamAudio extends Service {
+    /** indicates how to behave if the service is killed */
+    int mStartMode;
+    /** interface for clients that bind */
+    private final IBinder mBinder = new StreamBinder();
+    /** indicates whether onRebind should be used */
+    boolean mAllowRebind;
 
-public class StreamToServer {
     Thread streamToServThread = null;
     Thread initStreamThread = null;
     PDAudioRecordingManager rec = null;
     boolean isStreaming = false;
     URL url = null;
-    String output_dir;
+    String recording_out;
+    Context context = null;
     JSONObject jsonResponse = null;
     JSONObject jsonRequest = null;
 
-    /***************************
-     *  Pass in a recorder object, the urlstring and the current context
-     */
-    StreamToServer(PDAudioRecordingManager recorder, String urlString, String o_dir, JSONObject json){
+    /*public StreamAudio(PDAudioRecordingManager recorder, String urlString, Context c, JSONObject json) {
         streamToServThread = new Thread(new Runnable() {
             public void run() {
                 streamToServer();
@@ -65,7 +52,6 @@ public class StreamToServer {
                 catch (java.net.SocketTimeoutException timeOutErr) {
                     timeOutErr.printStackTrace();
                 }
-
             }
         });
         rec = recorder;
@@ -74,27 +60,60 @@ public class StreamToServer {
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-         output_dir = o_dir;
+        context = c;
         jsonRequest = json;
-    }
+    }*/
 
-    /*******************************
-     *  stop streaming/recording audio
-     */
-    public void stopStreamAudio() {
-        if (rec != null) {
-            rec.stopRecording();
-            isStreaming = false;
-            streamToServThread.interrupt();
+    public class StreamBinder extends Binder {
+         StreamAudio getService() {
+            return StreamAudio.this;
         }
     }
 
-    /*******************************
-     *  Start stream method:
-     *  Starts the chain of events to create an event
-     *  and stream the audio to the server.
-     */
-    public void startStreamAudio() {
+    /** Called when the service is being created. */
+    @Override
+    public void onCreate() {
+        // Threads
+        streamToServThread = new Thread(new Runnable() {
+            public void run() {
+                streamToServer();
+            }
+        });
+        initStreamThread = new Thread(new Runnable() {
+            public void run() {
+                try {
+                    initStream();
+                }
+                catch (java.net.SocketTimeoutException timeOutErr) {
+                    timeOutErr.printStackTrace();
+                }
+            }
+        });
+
+    }
+
+
+    /** The service is starting, due to a call to startService() */
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        String url_data = intent.getStringExtra("host_string");
+        recording_out = intent.getStringExtra("output_dir");
+        String geo_data = intent.getStringExtra("geo");
+        rec = new PDAudioRecordingManager();
+        jsonRequest = new JSONObject();
+        try {
+            jsonRequest.put("location", geo_data);
+            jsonRequest.put("user", 1); //TODO hardcoded user, will actually be unique user id
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            url = new URL(url_data);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
         initStreamThread.start();
         try {
             initStreamThread.join();
@@ -111,7 +130,21 @@ public class StreamToServer {
         }
         isStreaming = true;
         streamToServThread.start();
+        return mStartMode;
+    }
 
+    /** Called when The service is no longer used and is being destroyed */
+    @Override
+    public void onDestroy() {
+        if (rec != null) {
+            rec.stopRecording();
+            isStreaming = false;
+            streamToServThread.interrupt();
+        }
+    }
+    @Override
+    public IBinder onBind(Intent intent) {
+        return mBinder;
     }
 
     /*******************************
@@ -122,7 +155,7 @@ public class StreamToServer {
     private void initStream() throws java.net.SocketTimeoutException {
         HttpURLConnection conn = null;
         DataOutputStream out = null;
-
+        Log.d("[initStream]", "initStream: Starting connect...");
         try {
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Content-Type", "application/json");
@@ -141,18 +174,20 @@ public class StreamToServer {
 
             while ((inputLine = in.readLine()) != null) {
                 response.append(inputLine);
+                Log.d("[initStream]", inputLine);
             }
             in.close();
             jsonResponse = new JSONObject(response.toString());
+            Log.d("[initStream]", jsonResponse.toString());
         }
         // return error to user about unable to connect?
         finally {
+            Log.d("[initStream]", "initStream: ending connect...");
             conn.disconnect();
             return;
         }
 
     }
-
     /*******************************
      *  Streaming Function:
      *  POST data as 'chunked' streaming mode without length header
@@ -169,7 +204,7 @@ public class StreamToServer {
             conn.setChunkedStreamingMode(0);
 
             out = new BufferedOutputStream(conn.getOutputStream());
-            rec.startRecording(output_dir, out); // <--- need to pass this in
+            rec.startRecording(recording_out, out); // <--- need to pass this in
             while (isStreaming) {
                 try {
                     Thread.sleep(10000); //sleep so jvm can restore state after suspend
@@ -185,7 +220,7 @@ public class StreamToServer {
         // return error to user about unable to connect?
         catch (IOException e) {
             e.printStackTrace();
-            rec.startRecording(output_dir, null); //continue recording without stream
+            rec.startRecording(recording_out, null); //continue recording without stream
             isStreaming = false;
             return;
         }
@@ -200,4 +235,3 @@ public class StreamToServer {
         }
     }
 }
-

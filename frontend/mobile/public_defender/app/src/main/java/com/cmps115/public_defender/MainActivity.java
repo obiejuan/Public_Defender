@@ -2,11 +2,15 @@ package com.cmps115.public_defender;
 
 import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.os.IBinder;
+import android.renderscript.ScriptGroup;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -63,7 +67,11 @@ public class MainActivity extends AppCompatActivity implements
     private Boolean isSignedIn = false;
 
     // Set this = your local ip
-    private final String externalServerIP = "138.68.200.193";
+    private static final String DEV_EMULATOR = "10.0.2.2";
+    private static final String DEV_REAL_PHONE = "192.168.1.118"; // your local LAN IP (this is bryan's for example ;)
+    private static final String PRODUCTION_SERVER = "138.68.200.193";
+
+    private final String externalServerIP = DEV_EMULATOR;
     private final String externalServerPort = "3000";
 
 
@@ -250,8 +258,37 @@ public class MainActivity extends AppCompatActivity implements
         }
     }*/
 
-   public void broadCast(View view) {
-       if(!permissionToRecordAccepted || !permissionForLocationAccepted) return;
+
+   /*
+        Service Setup
+
+
+   boolean mIsBound = false;
+   StreamAudio mBoundService = new StreamAudio(pdarm, "http://" + externalServerIP + ":"  + externalServerPort + "/upload/", context, json_test);
+   private ServiceConnection mConnection = new ServiceConnection() {
+       public void onServiceConnected(ComponentName className, IBinder service) {
+           mBoundService = ((StreamAudio.StreamBinder) service).getService();
+
+       }
+       public void onServiceDisconnected(ComponentName className){
+           //do something....
+       }
+   };
+    void doBindService() {
+        bindService(new Intent(this, StreamAudio.class), mConnection, Context.BIND_AUTO_CREATE);
+        mIsBound = true;
+    }
+    void doUnbindService() {
+        if (mIsBound) {
+            // Detach our existing connection.
+            unbindService(mConnection);
+            mIsBound = false;
+        }
+    }
+  */
+
+    public void broadCast(View view) {
+       //if(!permissionToRecordAccepted || !permissionForLocationAccepted) return;
 
        Button r_button = (Button)findViewById(R.id.record_button);
        Context context = getApplicationContext();
@@ -268,24 +305,29 @@ public class MainActivity extends AppCompatActivity implements
        if(!(geo[0] == 0.0 && geo[1] == 0.0))
            Log.d("[GEO]", (geo[0] + ", " + geo[1]));
        // test data
-       JSONObject json_test = new JSONObject();
-       try {
-           json_test.put("location", String.format("(%f, %f)", geo[1], geo[0]) ); //have to reverse them
-           json_test.put("user", 2);
-       } catch (JSONException e) {
-           e.printStackTrace();
-       }  // end test data
+
+       String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
+
 
        if (!isRecording) {
            // USAGE EXAMPLE:
-           pdarm = new PDAudioRecordingManager();
-           serv = new StreamToServer(pdarm, "http://" + externalServerIP + ":"  + externalServerPort + "/upload/", context, json_test);
-           serv.startStreamAudio();
+           Log.d(TAG, "broadCast: It should start...");
+           //pdarm = new PDAudioRecordingManager();
+
+           Intent streamIntent = new Intent(this, StreamAudio.class);
+           String full_url = "http://" + externalServerIP + ":"  + externalServerPort + "/upload/";
+           streamIntent.putExtra("host_string", full_url);
+           streamIntent.putExtra("output_dir", context.getExternalCacheDir().getAbsolutePath());
+           streamIntent.putExtra("geo", geo_data);
+           startService(streamIntent);
+
            r_button.setText("Stop Recording.");
        }
        if (isRecording) {
            // USAGE EXAMPLE:
-           serv.stopStreamAudio();
+           Log.d(TAG, "broadCast: It should STOP recording...");
+           //serv.stopStreamAudio();
+           stopService(new Intent(this, StreamAudio.class));
            r_button.setText("Record");
        }
        isRecording = !isRecording;

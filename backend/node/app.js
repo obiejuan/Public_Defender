@@ -233,7 +233,7 @@ app.post('/upload/:event/:id/', function(req, res) {
 	event = req.params.event
 	console.log("Beginning transfer for unique key: " + file_id)	
 	
-	fileStream = fs.createWriteStream("./data_files/"+file_id + ".wav")
+	fileStream = fs.createWriteStream("./data_files/"+file_id + ".pcm")
 	req.pipe(fileStream)
 	
 	var tick = 0
