@@ -81,7 +81,7 @@ public class CurrentEvents extends Activity {
 
         JSONObject jsonRequest = new JSONObject();
         try {
-            jsonRequest.put("location", geo_data);
+            jsonRequest.put("current_location", geo_data);
             jsonRequest.put("distance", 100); //TODO hardcoded distance
         } catch (JSONException e) {
             e.printStackTrace();
