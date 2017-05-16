@@ -129,9 +129,6 @@ public class CurrentEvents extends Activity {
             populateListViewWithCurrentEvents();
             // what to do after it's done. Maybe update the UI thread?
             Log.d("[onPostExecute]", result.toString());
-            int duration = Toast.LENGTH_LONG;
-            Toast toast = Toast.makeText(current_context, "Nearby events received.", duration);
-            toast.show();
         }
     }
 }
