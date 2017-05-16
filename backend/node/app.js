@@ -23,18 +23,7 @@ var do_log = function (req, res, next) {
 	var date = new Date();
 	var curr_date = date.toLocaleString();
 
-	/*
-	 * Log valuable data about the incident 
-	 *   Post or Get request
-	 *   Eventually username
-	 * Write a console logging (middleware) function.
-	 * 
-	 */
-
-	// console.log(req);
-	// console.log(req.route.path);
-	// console.log(req.method);
-	// console.log(req.connection.remoteAddress);
+	// Include username at some point?
 	console.log(`${curr_date} [${r_method}] request in <${r_path}> by ${r_ipaddr}`);
 
 	next()
@@ -191,15 +180,15 @@ app.post('/user/new/', function(req, res, next){
  *
  */
 app.post('/upload/', function(req, res, next) {
-	console.log(req.body)
+	//console.log(req.body)
 	location = req.body.location 
 	// check user credentials
 	user = req.body.user /// @todo: change to actual credential lookup 
 	var event_id
 	unique_token = user + '_' + uuid()
 	date = new Date()
-	console.log(date.getTime())
-	console.log(date.toUTCString())
+	//console.log(date.getTime())
+	//console.log(date.toUTCString())
 
 	var record_data = {
         			 	user_id: user, 
