@@ -77,16 +77,12 @@ app.post('/nearby/', function (req, res, next) {
 	var r_path = req.path;
 	var r_ipaddr  = req.ip.match(ip_regex)[0];
 	var date_now = Date.now();
-
-	console.log(req);
-	console.log(req.route.path);
-	console.log(req.method);
-	console.log(req.connection.remoteAddress);
-	console.log(`[${r_method}]<${r_path}> ${r_ipaddr}`);
+	console.log(`[(${date_now})${r_method}]<${r_path}> ${r_ipaddr}`);
 	var query = {
-		current_location: req.body.location,
+		current_location: req.body.current_location,
 		distance: req.body.distance
 	}
+	console.log(query)
   	db.any(getNearby, query)
     .then(function (data) {
       	res.status(200)
