@@ -12,6 +12,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -81,7 +82,7 @@ public class CurrentEvents extends Activity {
 
         JSONObject jsonRequest = new JSONObject();
         try {
-            jsonRequest.put("current_location", geo_data);
+            jsonRequest.put("location", geo_data);
             jsonRequest.put("distance", 100); //TODO hardcoded distance
         } catch (JSONException e) {
             e.printStackTrace();
@@ -89,15 +90,16 @@ public class CurrentEvents extends Activity {
         new getNearbyEvents().execute(jsonRequest);
     }
 
-    private void populateListViewWithCurrentEvents()
-    {
+    private void populateListViewWithCurrentEvents(JSONObject events) throws JSONException {
         ListView listview = (ListView) findViewById(R.id.current_events);
-        String[] values = {"Test1", "Test2"};
-        final ArrayList<String> list = new ArrayList<String>();
-        for (int i = 0; i < values.length; ++i) {
-            list.add(values[i]);
-        }
+        //String[] values = {"Test1", "Test2"};
+        JSONArray event_list = events.getJSONArray("data");
 
+        final ArrayList<String> list = new ArrayList<String>();
+        //event_list.getJSONObject();
+        for (int i = 0; i < event_list.length(); ++i) {
+            list.add(event_list.getJSONObject(i).getString("event_id"));
+        }
         final CustomArrayAdaptor adapter = new CustomArrayAdaptor(this, android.R.layout.simple_list_item_1, list);
         listview.setAdapter(adapter);
     }
@@ -126,7 +128,11 @@ public class CurrentEvents extends Activity {
 
         protected void onPostExecute(JSONObject result) {
             if(progress != null) progress.dismiss();
-            populateListViewWithCurrentEvents();
+            try {
+                populateListViewWithCurrentEvents(result);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
             // what to do after it's done. Maybe update the UI thread?
             Log.d("[onPostExecute]", result.toString());
         }
