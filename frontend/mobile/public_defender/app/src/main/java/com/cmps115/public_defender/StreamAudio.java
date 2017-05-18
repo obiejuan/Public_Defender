@@ -38,31 +38,6 @@ public class StreamAudio extends Service {
     JSONObject jsonResponse = null;
     JSONObject jsonRequest = null;
 
-    /*public StreamAudio(PDAudioRecordingManager recorder, String urlString, Context c, JSONObject json) {
-        streamToServThread = new Thread(new Runnable() {
-            public void run() {
-                streamToServer();
-            }
-        });
-        initStreamThread = new Thread(new Runnable() {
-            public void run() {
-                try {
-                    initStream();
-                }
-                catch (java.net.SocketTimeoutException timeOutErr) {
-                    timeOutErr.printStackTrace();
-                }
-            }
-        });
-        rec = recorder;
-        try {
-            url = new URL(urlString);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        context = c;
-        jsonRequest = json;
-    }*/
 
     public class StreamBinder extends Binder {
          StreamAudio getService() {
@@ -100,6 +75,7 @@ public class StreamAudio extends Service {
         recording_out = intent.getStringExtra("output_dir");
         String geo_data = intent.getStringExtra("geo");
         rec = new PDAudioRecordingManager();
+
         jsonRequest = new JSONObject();
         try {
             jsonRequest.put("location", geo_data);
