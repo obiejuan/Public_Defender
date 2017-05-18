@@ -6,13 +6,14 @@
     android:layout_height="match_parent"
     tools:context="com.cmps115.public_defender.MainActivity"
     tools:layout_editor_absoluteX="0dp"
-    tools:layout_editor_absoluteY="25dp">
+    tools:layout_editor_absoluteY="25dp"
+    android:background="@drawable/lt_dangle">
 
 
     <Button
         android:id="@+id/record_button"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="176dp"
+        android:layout_height="73dp"
         android:layout_marginBottom="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
@@ -23,14 +24,14 @@
         android:shadowDx="8"
         android:shadowDy="8"
         android:shadowRadius="14"
-        android:text="Record / Broadcast"
+        android:text="Record"
         android:textSize="40sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/button7"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.789"
         tools:layout_constraintLeft_creator="1"
         tools:layout_constraintRight_creator="1"
         tools:layout_constraintTop_creator="1" />
