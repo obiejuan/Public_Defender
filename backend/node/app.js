@@ -4,13 +4,20 @@ var bodyParser = require("body-parser");
 var pgp = require('pg-promise')({});
 const uuid = require('uuid/v4');
 
+/**
+ * Setup server values
+ */
 var cn = {
-    host: 'localhost',
-    port: 5432,
-    database: 'pdefender',
-    user: 'node',
-    password: 'password'
+	host: 'localhost',
+	port: 5432,
+	database: 'pdefender',
+	user: 'node',
+	password: 'password'
 };
+
+/**
+ * Setup postgres connection and Express.js
+ */
 var db = pgp(cn);
 var app = express()
 
@@ -38,17 +45,16 @@ var do_log = function (req, res, next) {
 app.use(do_log)
 
 
-/*******************
- *	Routes.
+/**
+ *	Routes: Only parsing json automatically where needed.
  */
-// only parsing json automatically where needed.
 app.post('/upload/', bodyParser.json())
 app.post('/user/new/', bodyParser.json())
-app.post('/nearby/', bodyParser.json())
+app.post('/nearby/', bodyParser.json(), nearby)
 
 
 
-/***********
+/**
  *	Helper function for setting up QueryFiles
  *	usage:
  *		var sqlFindUser = sql('./sql/findUser.sql');
@@ -56,204 +62,212 @@ app.post('/nearby/', bodyParser.json())
  *		file: filename (string)
  */
 function sql(file) {
-    //path.join(__dirname, file)
-    return new pgp.QueryFile(file, {minify: true});
+	return new pgp.QueryFile(file, {
+		minify: true
+	});
 }
 
 
 
-/**********
+/**
  *	Setup QueryFiles once at startup
  */
 var stopEvent = sql('./sql_queries/pd_event/update_status.sql');
 var getNearby = sql('./sql_queries/pd_event/get_nearby.sql');
+var init_upload = sql('./sql_queries/pd_event/init_upload.sql');
+var new_recording = sql('./sql_queries/pd_recording/new_recording.sql');
 
 
-
-
-
-
-// boilerplate response -- returns all events 
-app.get('/', function (req, res, next) {
-  db.any('select * FROM pd_user INNER JOIN pd_event ON pd_event.pd_user_id=pd_user.user_id INNER JOIN pd_recording ON pd_event.event_id=pd_recording.event_id WHERE pd_event.active=false')
-    .then(function (data) {
-      	res.status(200)
-        	.json({
-          	  status: 'success',
-          	  data: data,
-          	  message: 'All events included.'
-        	});
-    })
-    .catch(function (err) {
-      	return next(err);
-    });
+/**
+ * Just returns all events, with associated user and recordings
+ */
+app.get('/', function (req, res, next) { 
+	db.any('select * FROM pd_user INNER JOIN pd_event ON pd_event.pd_user_id=pd_user.user_id INNER JOIN pd_recording ON pd_event.event_id=pd_recording.event_id WHERE pd_event.active=false')
+		.then(function (data) {
+			res.status(200)
+				.json({
+					status: 'success',
+					data: data,
+					message: 'All events included.'
+				});
+		})
+		.catch(function (err) { 
+			return next(err);
+		});
 })
 
-// get nearby incidents
-/*
- * req  - request object
- * res  - response object
- * next - next middleware function in app's request-response cycle
- */
-app.post('/nearby/', function (req, res, next) {
+/************************************************************************
+ * Get's the nearby active=true events for the parameters in #Request.
+ * 
+ * Uses: 
+ * @file get_nearby.sql
+ * 
+ * JSON keys: 
+ * @param {string} current_location
+ * @param {int} distance
+ ***********************************************************************/
+function nearby(req, res, next) {
 	var date_now = Date.now();
 	var query = {
-		current_location: req.body.location,
+		current_location: req.body.current_location,
 		distance: req.body.distance
 	}
-  	db.any(getNearby, query)
-    .then(function (data) {
-      	res.status(200)
-        	.json({
-          	  status: 'success',
-          	  data: data,
-        	});
-    })
-    .catch(function (err) {
-    	return next(err);
-    }).then(function (err) {  // error resonses
-		    res.status(500)
-		        .json({
-		        	status: 'error',
-		          	msg: err,
-		        })
-	}).catch(function(err) {});
-})
-
-
-/*****
- *	                                  Table "public.pd_user"
-  Column  |          Type          |                      Modifiers                       
-----------+------------------------+------------------------------------------------------
- user_id  | integer                | not null default nextval('pd_user_id_seq'::regclass)
- auth_key | character varying(255) | 
- email    | character varying(255) | 
-Indexes:
-    "pd_user_pkey" PRIMARY KEY, btree (user_id)
-Referenced by:
-    TABLE "pd_event" CONSTRAINT "pd_user_id" FOREIGN KEY (pd_user_id) REFERENCES pd_user(user_id)
- *
- */
-app.post('/user/new/', function(req, res, next){
+	console.log(query)
+	db.any(getNearby, query)
+		.then(function (data) {
+			res.status(200)
+				.json({
+					status: 'success',
+					data: data,
+				});
+		})
+		.catch(function (err) {
+			return next(err);
+		}).then(function (err) { // error resonses
+			res.status(500)
+				.json({
+					status: 'error',
+					msg: err,
+				})
+		}).catch(function (err) {});
+}
+/*********************************************************************************************
+ * User creation:
+ *  
+ * Table "public.pd_user"
+ *  Column  |          Type          |                      Modifiers                       
+ * ---------+------------------------+------------------------------------------------------
+ * user_id  | integer                | not null default nextval('pd_user_id_seq'::regclass)
+ * auth_key | character varying(255) | 
+ * email    | character varying(255) | 
+ * 
+ *********************************************************************************************/
+app.post('/user/new/', function (req, res, next) {
 	user = req.body
-	user_promise = db.query('INSERT INTO pd_user (auth_key, email) VALUES ($1, $2)',  [ user.auth_key, user.email ]).then(function (response_db) {
-	  	db.any('select * from pd_user').then(function (data) {
-	      res.status(200)
-	        .json({
-	          	status: 'success',
-	          	data: data
-	      	});
-	    console.log(user_promise);
+	user_promise = db.query('INSERT INTO pd_user (auth_key, email) VALUES ($1, $2)', [user.auth_key, user.email]).then(function (response_db) {
+		db.any('select * from pd_user').then(function (data) {
+			res.status(200)
+				.json({
+					status: 'success',
+					data: data
+				});
+			console.log(user_promise);
 		}).catch(function (err) {
 			console.log(err)
-	    	return err;
-	    }).then(function (err) {  // error resonses
-			    res.status(500)
-			        .json({
-			        	status: 'error',
-			          	msg: err,
-			        })
+			return err;
+		}).then(function (err) { // error resonses
+			res.status(500)
+				.json({
+					status: 'error',
+					msg: err,
+				})
 		}); //end catch of db.any then 
 
 	}).catch(function (err) {
 		console.log(err)
-    	return err;
-    }).then(function (err) {  // error resonses
-		    res.status(500)
-		        .json({
-		        	status: 'error',
-		          	msg: err,
-		        })
+		return err;
+	}).then(function (err) { // error resonses
+		res.status(500)
+			.json({
+				status: 'error',
+				msg: err,
+			})
 	});
 });
 
-/* 
- *   Table "public.pd_event"
-	   Column   |            Type             |                       Modifiers                       
-	------------+-----------------------------+-------------------------------------------------------
-	 event_id   | integer                     | not null default nextval('pd_event_id_seq'::regclass)
-	 location   | point                       | 
-	 pd_user_id | integer                     | not null
-	 active     | boolean                     | not null default true
-	 event_date | timestamp without time zone | not null
-	Indexes:
-	    "pd_event_pkey" PRIMARY KEY, btree (event_id)
-	    "fki_pd_user_id" btree (pd_user_id)
-	Foreign-key constraints:
-	    "pd_user_id" FOREIGN KEY (pd_user_id) REFERENCES pd_user(user_id)
-	Referenced by:
-	    TABLE "pd_recording" CONSTRAINT "pd_recordings_event_id_fkey" FOREIGN KEY (event_id) REFERENCES pd_event(event_id)
- *
- */
-app.post('/upload/', function(req, res, next) {
-	console.log(req.body)
-	location = req.body.location 
-	// check user credentials
-	user = req.body.user /// @todo: change to actual credential lookup 
+
+/******************************************************************************************************
+ * 	Table "public.pd_event"
+ *	   Column   |            Type             |                       Modifiers                       
+ *	------------+-----------------------------+-------------------------------------------------------
+ *	 event_id   | integer                     | not null default nextval('pd_event_id_seq'::regclass)
+ *	 location   | point                       | 
+ *	 pd_user_id | integer                     | not null
+ *	 active     | boolean                     | not null default true
+ *	 event_date | timestamp without time zone | not null
+ ******************************************************************************************************
+ * Uses:
+ * @file init_upload.sql
+ * @file new_recording.sql
+ * 
+ * JSON keys: 
+ * @param {int} user
+ * @param {string} location
+ * 
+ * Expressjs:
+ * @param {any} req 
+ * @param {any} res 
+ * @param {any} next 
+ * 
+ **/
+function upload (req, res, next) {
+	location = req.body.location
+	user = req.body.user 
 	var event_id
 	unique_token = user + '_' + uuid()
 	date = new Date()
-	console.log(date.getTime())
-	console.log(date.toUTCString())
 
 	var record_data = {
-        			 	user_id: user, 
-        			 	geo: location, 
-        			 	active: true, 
-        			 	timestamp: date
-        			  };
-
+		user_id: user,
+		geo: location,
+		active: true,
+		timestamp: date
+	};
 	db.tx(function (t) {
-        return t.one('INSERT INTO  pd_event (pd_user_id, location, active, event_date) VALUES ($<user_id>, $<geo>, $<active>, $<timestamp>)  RETURNING event_id', 
-        			 record_data,
-					 c => +c.event_id )
-            .then(function (id) {
-            	event_id = id
-            	console.log(id)
-            	console.log(unique_token)
-                return t.none('INSERT INTO pd_recording (event_id, filename) VALUES ($<id>, $<unique_token>)', {id, unique_token});
-            });
-    }).then(function () {
-		res.status(200)
-        .json({
-          status: 'success',
-          upload_token: unique_token,
-          url: ""+event_id+"/"+unique_token+"/"
-        });
-    })
-    .catch(function (err) {
-      return err;
-    }).then(function (err) {  // error resonses
-	    res.status(500)
-	        .json({
-	          status: 'error',
-	          msg: err,
-	          upload_token: null,
-	          url: null,
-	        });
-	   	}).catch(function() {});
-})
+			return t.one(init_upload, record_data, c => +c.event_id)
+				.then(function (id) {
+					event_id = id
+					console.log(id)
+					console.log(unique_token)
+					return t.none(new_recording,{ id, unique_token });
+				});
+		}).then(function () {
+			res.status(200)
+				.json({
+					status: 'success',
+					upload_token: unique_token,
+					url: `${event_id}/${unique_token}/`
+				});
+		})
+		.catch(function (err) {
+			return err;
+		}).then(function (err) { 
+			res.status(500)
+				.json({
+					status: 'error',
+					msg: err,
+					upload_token: null,
+					url: null,
+				});
+		}).catch(function () {});
+}
+app.post('/upload/', upload);
 
-/*
-	Table "public.pd_recording"
-  Column  |          Type          | Modifiers 
-----------+------------------------+-----------
- event_id | integer                | not null
- filename | character varying(255) | not null
-Indexes:
-    "pd_recordings_pkey" PRIMARY KEY, btree (event_id, filename)
-Foreign-key constraints:
-    "pd_recordings_event_id_fkey" FOREIGN KEY (event_id) REFERENCES pd_event(event_id)
-*/
 
-app.post('/upload/:event/:id/', function(req, res) {
+/*****************************************************
+ * Table "public.pd_recording"
+ *	Column    |         Type           | Modifiers 
+ *	----------+------------------------+-----------
+ *	event_id  | integer                | not null
+ *	filename  | character varying(255) | not null
+ *****************************************************
+ * Recieves the streaming data from client through a POST request.
+ * JSON:
+ * @param {int} id #filename
+ * @param {int} event #event_id
+ * 
+ * @param {any} req 
+ * @param {any} res 
+ * @param {any} next 
+ */
+function recieve_stream (req, res, next) {
 	file_id = req.params.id
 	event = req.params.event
-	console.log("Beginning transfer for unique key: " + file_id)	
-	
-	fileStream = fs.createWriteStream("./data_files/"+file_id + ".pcm")
+	console.log("Beginning transfer for unique key: " + file_id)
+
+	fileStream = fs.createWriteStream("./data_files/" + file_id + ".pcm")
 	req.pipe(fileStream)
-	
+
 	var tick = 0
 	var total_bytes = 0;
 	var errorMsg = null
@@ -261,40 +275,49 @@ app.post('/upload/:event/:id/', function(req, res) {
 		active: false,
 		event_id: event
 	}
-
-	// will be called any time data is in the buffer -- `chunk`
-	req.on('data', function(chunk){ 
-		//only logs data currently
+	/**
+	 * Called any time data is recieved from the request. Logs how much is transferred
+	 * and also keeps track of the number of chunks. 
+	 * @param {bytes[]} chunk
+	 **/
+	req.on('data', function (chunk) {
 		console.log(tick + ": " + (chunk.length / 1024).toFixed(2) + " KiB")
 		total_bytes = total_bytes + chunk.length
-		tick++; 
+		tick++;
 	})
-	req.on('end', function(){
+	/**
+	 * Called when the connection / request is ended. 
+	 **/
+	req.on('end', function () {
 		db.none(stopEvent, stop_data)
-			.then(() => { 
+			.then(() => {
 				console.log("Successful pd_event table update.");
 			})
 			.catch((err) => {
 				console.log("Error updating pd_event table.");
 				console.log(err);
 			});
-
-		console.log("End: "+ (total_bytes / 1024).toFixed(2) + " KiB transfered.")
+		console.log("End: " + (total_bytes / 1024).toFixed(2) + " KiB transfered.")
 		console.log("") //newline for prettier output on console
 	})
-	req.on('error', function(err){
+	req.on('error', function (err) {
 		errorMsg = err
 		console.log("Error: " + err)
-		
 	})
-	res.send({	
-				"UploadCompleted": true,
-				"Error": errorMsg,
-			})
+	/**
+	 * Send response to client. Minimal currently.
+	 **/
+	res.send({
+		"UploadCompleted": true,
+		"Error": errorMsg,
+	})
+}
+app.post('/upload/:event/:id/', recieve_stream)
 
-	
-})
 
+/** 
+ * Run the actual server
+ **/
 app.listen(3000, function () {
-  console.log('Currently defending on port 3000!')
+	console.log('Currently defending on port 3000!')
 })

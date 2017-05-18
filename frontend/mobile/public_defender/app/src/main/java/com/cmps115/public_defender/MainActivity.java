@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.IBinder;
 import android.renderscript.ScriptGroup;
 import android.support.annotation.NonNull;
@@ -35,6 +36,10 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
 /*
 Please note that if you want to change the draw/drop theme for this activity you need to ensure you're setting the contraints.
 This means that you will need to hit the little golden stars after you place an element. It is the bar above the drag/drop editor.
@@ -71,8 +76,10 @@ public class MainActivity extends AppCompatActivity implements
     private static final String DEV_REAL_PHONE = "192.168.1.118"; // your local LAN IP (this is bryan's for example ;)
     private static final String PRODUCTION_SERVER = "138.68.200.193";
 
-    private final String externalServerIP = DEV_EMULATOR;
+    private final String externalServerIP = PRODUCTION_SERVER;
     private final String externalServerPort = "3000";
+
+    JSONObject nearbyResponse = null;
 
 
     @Override
@@ -383,10 +390,13 @@ public class MainActivity extends AppCompatActivity implements
         startActivity(intent);
     }*/
 
+   //unfinished
     public void gotoCurrentEvents(View view) {
         if (isSignedIn) {
             Intent intent = new Intent(this, CurrentEvents.class);
             startActivity(intent);
+
+
         } else {
             Context context = getApplicationContext();
             CharSequence text = "You must sign in";
@@ -467,4 +477,7 @@ public class MainActivity extends AppCompatActivity implements
         }
         if (!permissionToRecordAccepted ) finish();
     }
+
+
 }
+
