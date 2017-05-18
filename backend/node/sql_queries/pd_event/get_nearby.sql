@@ -9,5 +9,5 @@
 SELECT event_id, location, active, point($<current_location>) <@> pd_event.location AS event_dist
 FROM pd_event 
 WHERE (point($<current_location>) <@> pd_event.location) < ($<distance>)
-AND active=true
+AND pd_event.active=TRUE
 ORDER by event_dist;

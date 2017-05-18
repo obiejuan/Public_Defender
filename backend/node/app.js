@@ -27,7 +27,7 @@ var app = express()
  */
 app.post('/upload/', bodyParser.json())
 app.post('/user/new/', bodyParser.json())
-app.post('/nearby/', bodyParser.json(), nearby())
+app.post('/nearby/', bodyParser.json(), nearby)
 
 
 
@@ -89,6 +89,7 @@ function nearby(req, res, next) {
 		current_location: req.body.current_location,
 		distance: req.body.distance
 	}
+	console.log(query)
 	db.any(getNearby, query)
 		.then(function (data) {
 			res.status(200)
