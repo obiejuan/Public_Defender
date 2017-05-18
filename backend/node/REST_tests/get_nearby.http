@@ -1,0 +1,10 @@
+//Get nearby
+POST http://127.0.0.1:3000/nearby/ HTTP/1.1
+Content-Type: application/json
+
+{
+    "location": "(-97.508039, 35.523762)",
+    "distance": "100"
+}
+
+// on default database data, 3 should be returned.
