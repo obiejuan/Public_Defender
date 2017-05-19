@@ -111,5 +111,8 @@
     <string name="signed_in_fmt">Signed in as: %s</string>
     <string name="loading">Loading…</string>
 
+    <string name="menu_home">Home</string>
+    <string name="menu_myRecordings">My Recordings</string>
+
 
 </resources>

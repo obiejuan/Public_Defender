@@ -10,6 +10,9 @@
     android:background="@drawable/lt_dangle">
 
 
+
+
+
     <Button
         android:id="@+id/record_button"
         android:layout_width="176dp"

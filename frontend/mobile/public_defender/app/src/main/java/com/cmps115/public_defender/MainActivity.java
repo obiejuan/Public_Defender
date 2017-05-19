@@ -18,7 +18,10 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MenuInflater;
+import android.view.Menu;
 import android.view.View;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -73,6 +76,38 @@ public class MainActivity extends AppCompatActivity implements
 
     private final String externalServerIP = DEV_REAL_PHONE;
     private final String externalServerPort = "3000";
+
+    // Bryan, the following two methods are the only thing that
+    // I added to this file.
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.app_menu, menu);
+        getSupportActionBar().setTitle("Public Defender");
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()) {
+            case R.id.action_sendToHome:
+                Intent sendToHome = new Intent(this, MainActivity.class);
+                this.startActivity(sendToHome);
+                break;
+            case R.id.action_sendToMyRecordings:
+                Intent intent = new Intent(this, MyRecordings.class);
+                this.startActivity(intent);
+                break;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
+        return true;
+    }
+
+
+
 
 
     @Override
