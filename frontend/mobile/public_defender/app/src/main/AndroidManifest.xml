@@ -27,6 +27,9 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".MenuProfile"
+            android:screenOrientation="portrait" />
+
         <activity android:name=".LoginActivity"
             android:label="@string/title_activity_login"
             android:screenOrientation="portrait"/>
@@ -34,11 +37,12 @@
         <activity android:name=".Settings"
             android:screenOrientation="portrait" />
 
-        <activity android:name=".Menu"
+        <activity android:name=".MyRecordings"
             android:screenOrientation="portrait" />
 
         <activity android:name=".CurrentEvents"
             android:screenOrientation="portrait" />
+
         <activity
             android:name=".FileBrowser"
             android:label="public_defender"
@@ -48,7 +52,8 @@
         <service
             android:name=".StreamAudio"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="false"/>
+
     </application>
 
 </manifest>

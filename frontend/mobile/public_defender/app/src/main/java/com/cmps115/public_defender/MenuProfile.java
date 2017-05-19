@@ -8,7 +8,7 @@ import android.view.View;
 
 import com.cmps115.public_defender.MainActivity;
 
-public class Menu extends AppCompatActivity {
+public class MenuProfile extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

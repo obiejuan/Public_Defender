@@ -24,7 +24,7 @@ public class Util extends AppCompatActivity implements View.OnClickListener{
     }
 
     private void gotoMenu(View view){
-        Intent intent = new Intent(this, Menu.class);
+        Intent intent = new Intent(this, MenuProfile.class);
         Log.d("Settings", "clicked menu");
         startActivity(intent);
     }

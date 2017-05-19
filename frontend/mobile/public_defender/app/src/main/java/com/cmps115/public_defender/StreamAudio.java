@@ -207,6 +207,7 @@ public class StreamAudio extends Service {
             rec.startRecording(recording_out, out); // <--- need to pass this in
             while (isStreaming) {
                 try {
+                    Log.d("STREAM", "streamToServer....");
                     Thread.sleep(10000); //sleep so jvm can restore state after suspend
                 } catch (InterruptedException e) {
                     continue;
