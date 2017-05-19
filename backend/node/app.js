@@ -1,7 +1,20 @@
-var express = require('express')
-const fs = require('fs')
+var express = require('express');
+var promise = require('bluebird');
+const fs = require('fs');
 var bodyParser = require("body-parser");
-var pgp = require('pg-promise')({});
+var pgp = require('pg-promise')({
+	promiseLib: promise
+});
+
+/**
+ * Google backend client verification
+ */
+var GoogleAuth = require('google-auth-library');
+var auth = new GoogleAuth;
+var the_CLIENT_ID = "232250430081-g10nohsivb1mgbvdb718628ioicqs2em.apps.googleusercontent.com";
+var test_token = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjQyMTcxMDE1MzMwZjEwN2FhN2QxYjg1NGJmY2Y1NGE0ZjVhNTA3MDUifQ.eyJhenAiOiIyMzIyNTA0MzAwODEtdXFxZmQ3dWh0cmdwbGk3dWpoNzZ2dmV0MGszaTRvOTAuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiIyMzIyNTA0MzAwODEtZzEwbm9oc2l2YjFtZ2J2ZGI3MTg2Mjhpb2ljcXMyZW0uYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDU1OTY1ODg5NDc3NzAyODYwNDAiLCJoZCI6InVjc2MuZWR1IiwiZW1haWwiOiJibWNjb2lkQHVjc2MuZWR1IiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImlzcyI6Imh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbSIsImlhdCI6MTQ5NTE3MTU5MSwiZXhwIjoxNDk1MTc1MTkxLCJuYW1lIjoiQnJ5YW4gTWNjb2lkIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS8tampvTkQwYXJ0Sm8vQUFBQUFBQUFBQUkvQUFBQUFBQUFBQUEvQUhhbEdoclFNV3B5Q2hjNUxteTVORjVFeHRpUjFSZkpJdy9zOTYtYy9waG90by5qcGciLCJnaXZlbl9uYW1lIjoiQnJ5YW4iLCJmYW1pbHlfbmFtZSI6Ik1jY29pZCIsImxvY2FsZSI6ImVuIn0.IReSTU_pji6Copdv2JM8mpWP-5iQwt2-i0j04msOobG1f0bnBg_JNOvEbAt6UxuTnp0gOj1iSzxeNM6AdJt2OT6ZEx0lyc76EjfIrcLsuemKotNzlaMgUiyf8EMg3VXm7T9rYKe4hoZIclHhwcQ8-gSSNtcwZT34nhtOEX5CMdN3FyFIZxNn6eSrME3f2v58mxVp8C9L8rvo1LKwWKmLiQiUqxtNsllX_1jUvHTTLeIE_Yi51h5tzJeMslYBdvcIJebYoErPlyepRyFKIpmfXcWY75VWZM_6sQhhFWb9Uj-735T9GchB8Xcn8Sq6-ODFo7JpNK0UPScFgiAxf_Ne1Q";
+
+// for unique recording identifier generation
 const uuid = require('uuid/v4');
 
 /**
@@ -14,6 +27,12 @@ var cn = {
 	user: 'node',
 	password: 'password'
 };
+
+/**
+ * Stream buffers
+ */
+var test_buff = new Buffer.alloc(64000, 'base64') // 62.5 KB ~4 seconds of buffer for 16Bit 8khz PCM MONO audio
+var live_streams = {"1": test_buff}
 
 /**
  * Setup postgres connection and Express.js
@@ -44,15 +63,12 @@ var do_log = function (req, res, next) {
 // Run the middleware logger.
 app.use(do_log)
 
-
 /**
  *	Routes: Only parsing json automatically where needed.
  */
 app.post('/upload/', bodyParser.json())
-app.post('/user/new/', bodyParser.json())
+app.post('/user/', bodyParser.json())
 app.post('/nearby/', bodyParser.json(), nearby)
-
-
 
 /**
  *	Helper function for setting up QueryFiles
@@ -67,8 +83,6 @@ function sql(file) {
 	});
 }
 
-
-
 /**
  *	Setup QueryFiles once at startup
  */
@@ -76,7 +90,6 @@ var stopEvent = sql('./sql_queries/pd_event/update_status.sql');
 var getNearby = sql('./sql_queries/pd_event/get_nearby.sql');
 var init_upload = sql('./sql_queries/pd_event/init_upload.sql');
 var new_recording = sql('./sql_queries/pd_recording/new_recording.sql');
-
 
 /**
  * Just returns all events, with associated user and recordings
@@ -111,8 +124,7 @@ function nearby(req, res, next) {
 	var query = {
 		current_location: req.body.current_location,
 		distance: req.body.distance
-	}
-	console.log(query)
+	};
 	db.any(getNearby, query)
 		.then(function (data) {
 			res.status(200)
@@ -131,6 +143,13 @@ function nearby(req, res, next) {
 				})
 		}).catch(function (err) {});
 }
+
+function lg_in (e, login) {
+	var payload = login.getPayload();
+	var userid = payload['sub'];
+	console.log(e);
+}
+
 /*********************************************************************************************
  * User creation:
  *  
@@ -142,8 +161,27 @@ function nearby(req, res, next) {
  * email    | character varying(255) | 
  * 
  *********************************************************************************************/
-app.post('/user/new/', function (req, res, next) {
-	user = req.body
+app.post('/user/', function (req, res, next) {
+	user_id_token = req.body.user_id_token;
+	/**
+	 * TODO:
+	 * 1.) check if key is valid
+	 * 2.) parse details
+	 * 3.) check if user exists
+	 * 4.) if not create user
+	 * 
+	 */
+	
+
+	var client = new auth.OAuth2(the_CLIENT_ID, '', '');
+	client.verifyIdToken(user_id_token, the_CLIENT_ID, function(e, login) {
+		var payload = login.getPayload();
+		var userid = payload['sub'];
+		console.log(e);
+		console.log(userid);
+	});
+
+
 	user_promise = db.query('INSERT INTO pd_user (auth_key, email) VALUES ($1, $2)', [user.auth_key, user.email]).then(function (response_db) {
 		db.any('select * from pd_user').then(function (data) {
 			res.status(200)
@@ -175,7 +213,6 @@ app.post('/user/new/', function (req, res, next) {
 	});
 });
 
-
 /******************************************************************************************************
  * 	Table "public.pd_event"
  *	   Column   |            Type             |                       Modifiers                       
@@ -201,8 +238,7 @@ app.post('/user/new/', function (req, res, next) {
  * 
  **/
 function upload (req, res, next) {
-	location = req.body.location
-	user = req.body.user 
+	var { location, user } = req.body
 	var event_id
 	unique_token = user + '_' + uuid()
 	date = new Date()
@@ -217,8 +253,6 @@ function upload (req, res, next) {
 			return t.one(init_upload, record_data, c => +c.event_id)
 				.then(function (id) {
 					event_id = id
-					console.log(id)
-					console.log(unique_token)
 					return t.none(new_recording,{ id, unique_token });
 				});
 		}).then(function () {
@@ -243,7 +277,6 @@ function upload (req, res, next) {
 }
 app.post('/upload/', upload);
 
-
 /*****************************************************
  * Table "public.pd_recording"
  *	Column    |         Type           | Modifiers 
@@ -263,6 +296,8 @@ app.post('/upload/', upload);
 function recieve_stream (req, res, next) {
 	file_id = req.params.id
 	event = req.params.event
+	live_streams[event] = null;
+	//live_streams[event] = Buffer.alloc(64000, 0, 'base64')
 	console.log("Beginning transfer for unique key: " + file_id)
 
 	fileStream = fs.createWriteStream("./data_files/" + file_id + ".pcm")
@@ -284,6 +319,19 @@ function recieve_stream (req, res, next) {
 		console.log(tick + ": " + (chunk.length / 1024).toFixed(2) + " KiB")
 		total_bytes = total_bytes + chunk.length
 		tick++;
+
+		/**
+		 * Testing for live stream implementation
+		 */
+		//console.log(chunk.toString('base64'))
+		if (Buffer.isBuffer(live_streams[event])) {
+			var buff2 = new Buffer(chunk.toString('base64'))
+			live_streams[event] = Buffer.concat( [ live_streams[event] , buff2 ] );
+		}
+		else {
+			live_streams[event] = new Buffer(chunk.toString('base64'));
+		}
+		
 	})
 	/**
 	 * Called when the connection / request is ended. 
@@ -299,25 +347,24 @@ function recieve_stream (req, res, next) {
 			});
 		console.log("End: " + (total_bytes / 1024).toFixed(2) + " KiB transfered.")
 		console.log("") //newline for prettier output on console
-	})
+	});
 	req.on('error', function (err) {
 		errorMsg = err
 		console.log("Error: " + err)
-	})
+	});
 	/**
 	 * Send response to client. Minimal currently.
 	 **/
 	res.send({
 		"UploadCompleted": true,
 		"Error": errorMsg,
-	})
+	});
 }
-app.post('/upload/:event/:id/', recieve_stream)
-
+app.post('/upload/:event/:id/', recieve_stream);
 
 /** 
  * Run the actual server
  **/
 app.listen(3000, function () {
-	console.log('Currently defending on port 3000!')
-})
+	console.log('Currently defending on port 3000!!')
+});

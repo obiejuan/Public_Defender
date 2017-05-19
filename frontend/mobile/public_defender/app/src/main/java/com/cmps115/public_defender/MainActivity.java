@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements
     private static final String DEV_REAL_PHONE = "192.168.1.118"; // your local LAN IP (this is bryan's for example ;)
     private static final String PRODUCTION_SERVER = "138.68.200.193";
 
-    private final String externalServerIP = PRODUCTION_SERVER;
+    private final String externalServerIP = DEV_EMULATOR;
     private final String externalServerPort = "3000";
 
     JSONObject nearbyResponse = null;
@@ -99,6 +99,7 @@ public class MainActivity extends AppCompatActivity implements
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
+                .requestIdToken(getString(R.string.CLIENT_ID))
                 .build();
         // [END configure_signin]
 
@@ -217,7 +218,12 @@ public class MainActivity extends AppCompatActivity implements
             GoogleSignInAccount acct = result.getSignInAccount();
             mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getDisplayName()));
             Log.d(TAG, "handleSignInResult: "+ acct.getEmail());
-            Log.d(TAG, "handleSignInResult: "+ acct.getId());
+            Log.d(TAG, "handleSignInResult: "+ acct.getIdToken());
+            /*
+                Send token to server?
+                Alternatively, just send on every request and call verification on that.
+             */
+
             isSignedIn = true;
             updateUI(true);
         } else {

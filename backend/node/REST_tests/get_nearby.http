@@ -7,4 +7,4 @@ Content-Type: application/json
     "distance": "100"
 }
 
-// on default database data, 3 should be returned.
+// on default database data 0 should be returned. (because none have active=TRUE)
