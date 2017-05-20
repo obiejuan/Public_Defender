@@ -2,7 +2,7 @@
 -- PostgreSQL database cluster dump
 --
 
--- Started on 2017-05-03 18:02:24 PDT
+-- Started on 2017-05-19 18:54:28 PDT
 
 SET default_transaction_read_only = off;
 
@@ -45,7 +45,7 @@ SET default_transaction_read_only = off;
 -- Dumped from database version 9.5.6
 -- Dumped by pg_dump version 9.5.6
 
--- Started on 2017-05-03 18:02:24 PDT
+-- Started on 2017-05-19 18:54:28 PDT
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -64,7 +64,7 @@ CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 
 
 --
--- TOC entry 2198 (class 0 OID 0)
+-- TOC entry 2201 (class 0 OID 0)
 -- Dependencies: 1
 -- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
 --
@@ -81,7 +81,7 @@ CREATE EXTENSION IF NOT EXISTS cube WITH SCHEMA public;
 
 
 --
--- TOC entry 2199 (class 0 OID 0)
+-- TOC entry 2202 (class 0 OID 0)
 -- Dependencies: 3
 -- Name: EXTENSION cube; Type: COMMENT; Schema: -; Owner: 
 --
@@ -98,7 +98,7 @@ CREATE EXTENSION IF NOT EXISTS earthdistance WITH SCHEMA public;
 
 
 --
--- TOC entry 2200 (class 0 OID 0)
+-- TOC entry 2203 (class 0 OID 0)
 -- Dependencies: 2
 -- Name: EXTENSION earthdistance; Type: COMMENT; Schema: -; Owner: 
 --
@@ -144,7 +144,7 @@ CREATE SEQUENCE pd_event_id_seq
 ALTER TABLE pd_event_id_seq OWNER TO node;
 
 --
--- TOC entry 2201 (class 0 OID 0)
+-- TOC entry 2204 (class 0 OID 0)
 -- Dependencies: 184
 -- Name: pd_event_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: node
 --
@@ -153,7 +153,7 @@ ALTER SEQUENCE pd_event_id_seq OWNED BY pd_event.event_id;
 
 
 --
--- TOC entry 187 (class 1259 OID 16586)
+-- TOC entry 185 (class 1259 OID 16479)
 -- Name: pd_recording; Type: TABLE; Schema: public; Owner: node
 --
 
@@ -166,21 +166,25 @@ CREATE TABLE pd_recording (
 ALTER TABLE pd_recording OWNER TO node;
 
 --
--- TOC entry 185 (class 1259 OID 16479)
+-- TOC entry 186 (class 1259 OID 16482)
 -- Name: pd_user; Type: TABLE; Schema: public; Owner: node
 --
 
 CREATE TABLE pd_user (
     user_id integer NOT NULL,
     auth_key character varying(255),
-    email character varying(255)
+    email character varying(255),
+    google_id character varying(255) NOT NULL,
+    google_firstname character varying(255),
+    google_lastname character varying(255),
+    date_created timestamp with time zone DEFAULT now()
 );
 
 
 ALTER TABLE pd_user OWNER TO node;
 
 --
--- TOC entry 186 (class 1259 OID 16485)
+-- TOC entry 187 (class 1259 OID 16488)
 -- Name: pd_user_id_seq; Type: SEQUENCE; Schema: public; Owner: node
 --
 
@@ -195,8 +199,8 @@ CREATE SEQUENCE pd_user_id_seq
 ALTER TABLE pd_user_id_seq OWNER TO node;
 
 --
--- TOC entry 2202 (class 0 OID 0)
--- Dependencies: 186
+-- TOC entry 2205 (class 0 OID 0)
+-- Dependencies: 187
 -- Name: pd_user_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: node
 --
 
@@ -204,7 +208,7 @@ ALTER SEQUENCE pd_user_id_seq OWNED BY pd_user.user_id;
 
 
 --
--- TOC entry 2061 (class 2604 OID 16487)
+-- TOC entry 2061 (class 2604 OID 16490)
 -- Name: event_id; Type: DEFAULT; Schema: public; Owner: node
 --
 
@@ -212,7 +216,7 @@ ALTER TABLE ONLY pd_event ALTER COLUMN event_id SET DEFAULT nextval('pd_event_id
 
 
 --
--- TOC entry 2062 (class 2604 OID 16488)
+-- TOC entry 2062 (class 2604 OID 16491)
 -- Name: user_id; Type: DEFAULT; Schema: public; Owner: node
 --
 
@@ -220,7 +224,7 @@ ALTER TABLE ONLY pd_user ALTER COLUMN user_id SET DEFAULT nextval('pd_user_id_se
 
 
 --
--- TOC entry 2186 (class 0 OID 16473)
+-- TOC entry 2189 (class 0 OID 16473)
 -- Dependencies: 183
 -- Data for Name: pd_event; Type: TABLE DATA; Schema: public; Owner: node
 --
@@ -233,7 +237,7 @@ COPY pd_event (event_id, location, pd_user_id, active, event_date) FROM stdin;
 
 
 --
--- TOC entry 2203 (class 0 OID 0)
+-- TOC entry 2206 (class 0 OID 0)
 -- Dependencies: 184
 -- Name: pd_event_id_seq; Type: SEQUENCE SET; Schema: public; Owner: node
 --
@@ -242,8 +246,8 @@ SELECT pg_catalog.setval('pd_event_id_seq', 7, true);
 
 
 --
--- TOC entry 2190 (class 0 OID 16586)
--- Dependencies: 187
+-- TOC entry 2191 (class 0 OID 16479)
+-- Dependencies: 185
 -- Data for Name: pd_recording; Type: TABLE DATA; Schema: public; Owner: node
 --
 
@@ -255,20 +259,20 @@ COPY pd_recording (event_id, filename) FROM stdin;
 
 
 --
--- TOC entry 2188 (class 0 OID 16479)
--- Dependencies: 185
+-- TOC entry 2192 (class 0 OID 16482)
+-- Dependencies: 186
 -- Data for Name: pd_user; Type: TABLE DATA; Schema: public; Owner: node
 --
 
-COPY pd_user (user_id, auth_key, email) FROM stdin;
-1	78yahsdf76gahsdf	blah@gmail.com
-2	7hu8ansdf79hpa9su8dfjasndf	someother@gmail.com
+COPY pd_user (user_id, auth_key, email, google_id, google_firstname, google_lastname, date_created) FROM stdin;
+1	78yahsdf76gahsdf	blah@gmail.com	1234	First	User	2017-05-20 01:52:26.179531+00
+2	7hu8ansdf79hpa9su8dfjasndf	someother@gmail.com	4321	Next	User	2017-05-20 01:52:26.179531+00
 \.
 
 
 --
--- TOC entry 2204 (class 0 OID 0)
--- Dependencies: 186
+-- TOC entry 2207 (class 0 OID 0)
+-- Dependencies: 187
 -- Name: pd_user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: node
 --
 
@@ -276,7 +280,7 @@ SELECT pg_catalog.setval('pd_user_id_seq', 1, true);
 
 
 --
--- TOC entry 2065 (class 2606 OID 16490)
+-- TOC entry 2066 (class 2606 OID 16493)
 -- Name: pd_event_pkey; Type: CONSTRAINT; Schema: public; Owner: node
 --
 
@@ -285,7 +289,7 @@ ALTER TABLE ONLY pd_event
 
 
 --
--- TOC entry 2069 (class 2606 OID 16595)
+-- TOC entry 2068 (class 2606 OID 16495)
 -- Name: pd_recordings_pkey; Type: CONSTRAINT; Schema: public; Owner: node
 --
 
@@ -294,7 +298,7 @@ ALTER TABLE ONLY pd_recording
 
 
 --
--- TOC entry 2067 (class 2606 OID 16492)
+-- TOC entry 2070 (class 2606 OID 16497)
 -- Name: pd_user_pkey; Type: CONSTRAINT; Schema: public; Owner: node
 --
 
@@ -303,7 +307,16 @@ ALTER TABLE ONLY pd_user
 
 
 --
--- TOC entry 2063 (class 1259 OID 16493)
+-- TOC entry 2072 (class 2606 OID 16597)
+-- Name: unique_auth_key; Type: CONSTRAINT; Schema: public; Owner: node
+--
+
+ALTER TABLE ONLY pd_user
+    ADD CONSTRAINT unique_auth_key UNIQUE (auth_key);
+
+
+--
+-- TOC entry 2064 (class 1259 OID 16498)
 -- Name: fki_pd_user_id; Type: INDEX; Schema: public; Owner: node
 --
 
@@ -311,7 +324,7 @@ CREATE INDEX fki_pd_user_id ON pd_event USING btree (pd_user_id);
 
 
 --
--- TOC entry 2071 (class 2606 OID 16589)
+-- TOC entry 2074 (class 2606 OID 16499)
 -- Name: pd_recordings_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: node
 --
 
@@ -320,7 +333,7 @@ ALTER TABLE ONLY pd_recording
 
 
 --
--- TOC entry 2070 (class 2606 OID 16494)
+-- TOC entry 2073 (class 2606 OID 16504)
 -- Name: pd_user_id; Type: FK CONSTRAINT; Schema: public; Owner: node
 --
 
@@ -329,7 +342,7 @@ ALTER TABLE ONLY pd_event
 
 
 --
--- TOC entry 2197 (class 0 OID 0)
+-- TOC entry 2200 (class 0 OID 0)
 -- Dependencies: 9
 -- Name: public; Type: ACL; Schema: -; Owner: postgres
 --
@@ -340,7 +353,7 @@ GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
--- Completed on 2017-05-03 18:02:24 PDT
+-- Completed on 2017-05-19 18:54:28 PDT
 
 --
 -- PostgreSQL database dump complete
@@ -357,7 +370,7 @@ SET default_transaction_read_only = off;
 -- Dumped from database version 9.5.6
 -- Dumped by pg_dump version 9.5.6
 
--- Started on 2017-05-03 18:02:24 PDT
+-- Started on 2017-05-19 18:54:28 PDT
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -405,7 +418,7 @@ GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
--- Completed on 2017-05-03 18:02:25 PDT
+-- Completed on 2017-05-19 18:54:28 PDT
 
 --
 -- PostgreSQL database dump complete
@@ -422,7 +435,7 @@ SET default_transaction_read_only = off;
 -- Dumped from database version 9.5.6
 -- Dumped by pg_dump version 9.5.6
 
--- Started on 2017-05-03 18:02:25 PDT
+-- Started on 2017-05-19 18:54:28 PDT
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -459,7 +472,7 @@ COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 
 --
--- TOC entry 3 (class 3079 OID 16499)
+-- TOC entry 3 (class 3079 OID 16509)
 -- Name: cube; Type: EXTENSION; Schema: -; Owner: 
 --
 
@@ -476,7 +489,7 @@ COMMENT ON EXTENSION cube IS 'data type for multidimensional cubes';
 
 
 --
--- TOC entry 2 (class 3079 OID 16571)
+-- TOC entry 2 (class 3079 OID 16581)
 -- Name: earthdistance; Type: EXTENSION; Schema: -; Owner: 
 --
 
@@ -504,13 +517,13 @@ GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
--- Completed on 2017-05-03 18:02:25 PDT
+-- Completed on 2017-05-19 18:54:29 PDT
 
 --
 -- PostgreSQL database dump complete
 --
 
--- Completed on 2017-05-03 18:02:25 PDT
+-- Completed on 2017-05-19 18:54:29 PDT
 
 --
 -- PostgreSQL database cluster dump complete

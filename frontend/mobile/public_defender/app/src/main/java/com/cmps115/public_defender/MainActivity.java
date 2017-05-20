@@ -275,38 +275,52 @@ public class MainActivity extends AppCompatActivity implements
     public void broadCast(View view) {
        //if(!permissionToRecordAccepted || !permissionForLocationAccepted) return;
 
-       Button r_button = (Button)findViewById(R.id.record_button);
-       Context context = getApplicationContext();
+        if (isSignedIn) {
+            Button r_button = (Button)findViewById(R.id.record_button);
+            Context context = getApplicationContext();
+            CharSequence text = "Hit Record";
+            int duration = Toast.LENGTH_SHORT;
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
 
-       // Get the geolocation
-       double[] geo = {0.0, 0.0};
-       if(geoHandler.hasLocationOn())
-           geo = geoHandler.getGeolocation();
+            // Get the geolocation
+            double[] geo = {0.0, 0.0};
+            if(geoHandler.hasLocationOn())
+                geo = geoHandler.getGeolocation();
 
-       String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
+            if(!(geo[0] == 0.0 && geo[1] == 0.0))
+                Log.d("[GEO]", (geo[0] + ", " + geo[1]));
+            // test data
 
-        if (streamIntent == null) {
-            streamIntent = new Intent(this, StreamAudio.class);
+            String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
+
+
+            if (!isRecording) {
+                // USAGE EXAMPLE:
+                Log.d(TAG, "broadCast: It should start...");
+                //pdarm = new PDAudioRecordingManager();
+
+                Intent streamIntent = new Intent(this, StreamAudio.class);
+                String full_url = "http://" + externalServerIP + ":"  + externalServerPort + "/upload/";
+                streamIntent.putExtra("host_string", full_url);
+                streamIntent.putExtra("output_dir", context.getExternalCacheDir().getAbsolutePath());
+                streamIntent.putExtra("geo", geo_data);
+                startService(streamIntent);
+
+                r_button.setText("Stop Recording.");
+            }
+            if (isRecording) {
+                // USAGE EXAMPLE:
+                Log.d(TAG, "broadCast: It should STOP recording...");
+                //serv.stopStreamAudio();
+                stopService(new Intent(this, StreamAudio.class));
+                r_button.setText("Record");
+            }
+            isRecording = !isRecording;
+        } else {
+            promptSignIn();
         }
-
-       if (!isRecording) {
-           // USAGE EXAMPLE:
-           Log.d(TAG, "broadCast: It should start...");
-           String full_url = "http://" + externalServerIP + ":"  + externalServerPort + "/upload/";
-           streamIntent.putExtra("host_string", full_url);
-           streamIntent.putExtra("output_dir", context.getExternalCacheDir().getAbsolutePath());
-           streamIntent.putExtra("geo", geo_data);
-           startService(streamIntent);
-           r_button.setText("Stop Recording.");
-       }
-       if (isRecording) {
-           // USAGE EXAMPLE:
-           Log.d(TAG, "broadCast: It should STOP recording...");
-           stopService(streamIntent);
-           r_button.setText("Record");
-       }
-       isRecording = !isRecording;
-   }
+    }
 
 //    public void broadCast(View view) {
 //        if(!permissionToRecordAccepted || !permissionForLocationAccepted) return;
@@ -344,11 +358,7 @@ public class MainActivity extends AppCompatActivity implements
             Log.d("Menu", "clicked menu");
             startActivity(intent);
         } else {
-            Context context = getApplicationContext();
-            CharSequence text = "You must sign in";
-            int duration = Toast.LENGTH_SHORT;
-            Toast toast = Toast.makeText(context, text, duration);
-            toast.show();
+           promptSignIn();
         }
     }
 
@@ -357,12 +367,16 @@ public class MainActivity extends AppCompatActivity implements
             Intent intent = new Intent(this, CurrentEvents.class);
             startActivity(intent);
         } else {
-            Context context = getApplicationContext();
-            CharSequence text = "You must sign in";
-            int duration = Toast.LENGTH_SHORT;
-            Toast toast = Toast.makeText(context, text, duration);
-            toast.show();
+            promptSignIn();
         }
+    }
+
+    public void promptSignIn(){
+        Context context = getApplicationContext();
+        CharSequence text = "You must sign in";
+        int duration = Toast.LENGTH_SHORT;
+        Toast toast = Toast.makeText(context, text, duration);
+        toast.show();
     }
 
     // [START revokeAccess]
