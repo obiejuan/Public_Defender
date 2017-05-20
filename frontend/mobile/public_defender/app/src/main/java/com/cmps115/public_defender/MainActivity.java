@@ -73,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements
         if (savedInstanceState != null) {
             isRecording = savedInstanceState.getBoolean("is_recording");
         }
+
         setContentView(R.layout.activity_main);
         // Views
         mStatusTextView = (TextView) findViewById(R.id.status);
@@ -118,6 +119,14 @@ public class MainActivity extends AppCompatActivity implements
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
     // [END signIn]
+    private void changeButtonState(boolean b) {
+        Button rec = (Button) findViewById(R.id.record_button);
+        rec.setEnabled(b);
+        Button curr_events = (Button) findViewById(R.id.button7);
+        curr_events.setEnabled(b);
+        Button menu_btn = (Button) findViewById(R.id.button5);
+        menu_btn.setEnabled(b);
+    }
 
     // [START signOut]
     private void signOut() {
@@ -125,6 +134,7 @@ public class MainActivity extends AppCompatActivity implements
                 new ResultCallback<Status>() {
                     @Override
                     public void onResult(Status status) {
+                        changeButtonState(false);
                         isSignedIn = false;
                         // [START_EXCLUDE]
                         updateUI(false);
@@ -205,7 +215,7 @@ public class MainActivity extends AppCompatActivity implements
         if (result.isSuccess()) {
             // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
-            mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getDisplayName()));
+            mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getEmail()));
             Log.d(TAG, "handleSignInResult: "+ acct.getEmail());
             Log.d(TAG, "handleSignInResult: "+ acct.getIdToken());
             /*
@@ -214,10 +224,13 @@ public class MainActivity extends AppCompatActivity implements
              */
             SharedData.setKey("google_api_client", mGoogleApiClient);
             SharedData.setKey("google_acct", acct);
+            Button rec = (Button) findViewById(R.id.record_button);
+            changeButtonState(true);
             isSignedIn = true;
             updateUI(true);
         } else {
             // Signed out, show unauthenticated UI.
+           changeButtonState(false);
             isSignedIn = false;
             updateUI(false);
         }

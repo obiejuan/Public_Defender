@@ -76,6 +76,7 @@ public class StreamAudio extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         acct = (GoogleSignInAccount) SharedData.getKey("google_acct");
         idToken = acct.getIdToken();
+        String userId = acct.getId();
         String url_data = intent.getStringExtra("host_string");
         recording_out = intent.getStringExtra("output_dir");
         String geo_data = intent.getStringExtra("geo");
@@ -84,7 +85,7 @@ public class StreamAudio extends Service {
         jsonRequest = new JSONObject();
         try {
             jsonRequest.put("location", geo_data);
-            jsonRequest.put("user", 1); //TODO hardcoded user, will actually be unique user id
+            jsonRequest.put("user", userId);
         } catch (JSONException e) {
             e.printStackTrace();
         }

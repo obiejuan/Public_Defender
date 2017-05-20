@@ -277,29 +277,33 @@ app.post('/users/', function (req, res, next) {
  * 
  **/
 function upload (req, res, next) {
+
 	var { location, user } = req.body
 	var event_id
-	unique_token = user + '_' + uuid()
 	date = new Date()
-
-	var record_data = {
-		user_id: user,
-		geo: location,
-		active: true,
-		timestamp: date
-	};
+	
 	db.tx(function (t) {
-			return t.one(init_upload, record_data, c => +c.event_id)
-				.then(function (id) {
-					event_id = id
-					return t.none(new_recording,{ id, unique_token });
-				});
+		return t.one(select_user, {g_userid: user}, c=> +c.user_id) //google_id --> pd_user_id
+			.then(function (userid){
+				console.log(userid);
+				unique_token = userid + '_' + uuid()
+				var record_data = {
+					user_id: userid,
+					geo: location,
+					active: true,
+					timestamp: date
+				};
+				return t.one(init_upload, record_data, c => +c.event_id) //create event --> event_id
+			}).then(function (id) {
+				event_id = id
+				return t.none(new_recording,{ id, unique_token });
+			});
 		}).then(function () {
 			res.status(200)
 				.json({
 					status: 'success',
-					upload_token: unique_token,
-					url: `${event_id}/${unique_token}/`
+					upload_token: unique_token, //token all by itself
+					url: `${event_id}/${unique_token}/` //unique upload url
 				});
 		})
 		.catch(function (err) {

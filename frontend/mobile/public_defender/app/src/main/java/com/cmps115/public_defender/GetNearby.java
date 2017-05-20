@@ -25,7 +25,6 @@ public class GetNearby {
         acct = (GoogleSignInAccount) SharedData.getKey("google_acct");
         idToken = acct.getIdToken();
 
-
         try {
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Content-Type", "application/json");
