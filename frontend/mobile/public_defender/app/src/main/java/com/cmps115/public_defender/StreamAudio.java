@@ -7,6 +7,8 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -34,9 +36,10 @@ public class StreamAudio extends Service {
     boolean isStreaming = false;
     URL url = null;
     String recording_out;
-    Context context = null;
     JSONObject jsonResponse = null;
     JSONObject jsonRequest = null;
+    GoogleSignInAccount acct;
+    String idToken = null;
 
 
     public class StreamBinder extends Binder {
@@ -71,6 +74,8 @@ public class StreamAudio extends Service {
     /** The service is starting, due to a call to startService() */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        acct = (GoogleSignInAccount) SharedData.getKey("google_acct");
+        idToken = acct.getIdToken();
         String url_data = intent.getStringExtra("host_string");
         recording_out = intent.getStringExtra("output_dir");
         String geo_data = intent.getStringExtra("geo");
@@ -89,7 +94,6 @@ public class StreamAudio extends Service {
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-
         initStreamThread.start();
         try {
             initStreamThread.join();
@@ -106,7 +110,7 @@ public class StreamAudio extends Service {
         }
         isStreaming = true;
         streamToServThread.start();
-        return mStartMode;
+        return START_REDELIVER_INTENT;
     }
 
     /** Called when The service is no longer used and is being destroyed */
@@ -135,6 +139,7 @@ public class StreamAudio extends Service {
         try {
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("Auth-Key", idToken);
             conn.setFixedLengthStreamingMode(jsonRequest.toString().getBytes().length);
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
@@ -176,6 +181,7 @@ public class StreamAudio extends Service {
         try {
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
+            conn.setRequestProperty("Auth-Key", idToken);
             conn.setDoOutput(true);
             conn.setChunkedStreamingMode(0);
 

@@ -104,12 +104,15 @@
     <string name="permission_rationale">"Contacts permissions are needed for providing email
         completions."
     </string>
+    <string name="CLIENT_ID">232250430081-g10nohsivb1mgbvdb718628ioicqs2em.apps.googleusercontent.com</string>
     <string name="title_activity_login2">Sign in</string>
     <string name="signed_out">Signed out</string>
     <string name="sign_out">Sign Out</string>
     <string name="disconnect">Disconnect</string>
     <string name="signed_in_fmt">Signed in as: %s</string>
     <string name="loading">Loading…</string>
+    <string name="title_activity_event_map">Active Events</string>
+    <string name="title_activity_maps">Map</string>
 
 
 </resources>

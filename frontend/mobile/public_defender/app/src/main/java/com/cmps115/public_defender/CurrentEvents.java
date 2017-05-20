@@ -10,7 +10,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
+
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -23,8 +25,10 @@ import java.util.HashMap;
 import java.util.List;
 
 public class CurrentEvents extends Activity {
-    Context current_context = null;
     ProgressDialog progress;
+    GoogleApiClient googleApiClient;
+    GoogleSignInAccount acct;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,6 +39,10 @@ public class CurrentEvents extends Activity {
         progress.setMessage("Hold on while we search..");
         progress.setCancelable(false);
         progress.show();
+        acct = (GoogleSignInAccount) SharedData.getKey("google_acct");
+        googleApiClient = (GoogleApiClient) SharedData.getKey("google_api_client");
+        Log.d("google_api_client:", String.valueOf(googleApiClient.isConnected()));
+        Log.d("google_acct:", String.valueOf(acct.getIdToken()));
     }
 
     private class CustomArrayAdaptor extends ArrayAdapter<String> {
@@ -62,8 +70,7 @@ public class CurrentEvents extends Activity {
     }
 
     public void goHome(View view) {
-        Intent intent = new Intent(this, MainActivity.class);
-        startActivity(intent);
+        finish();
     }
 
     public void refresh(View view) {
@@ -73,6 +80,10 @@ public class CurrentEvents extends Activity {
         progress.setMessage("Hold on while we search..");
         progress.setCancelable(false);
         progress.show();
+    }
+    public void gotoMap(View view){
+        Intent intent = new Intent(this, EventMap.class);
+        startActivity(intent);
     }
 
     private void findCurrentEventsOnServer()
@@ -112,7 +123,7 @@ public class CurrentEvents extends Activity {
             JSONObject input = input_json[number_req-1]; //only process the last (most recent) request
             URL url = null;
             try {
-                url = new URL("http://138.68.200.193:3000/nearby/");
+                url = new URL("http://10.0.2.2:3000/nearby/");
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }

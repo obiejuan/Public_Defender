@@ -2,20 +2,12 @@ package com.cmps115.public_defender;
 
 import android.Manifest;
 import android.app.ProgressDialog;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.os.AsyncTask;
-import android.os.IBinder;
-import android.renderscript.ScriptGroup;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -34,17 +26,13 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
-import org.json.JSONException;
-import org.json.JSONObject;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
 /*
 Please note that if you want to change the draw/drop theme for this activity you need to ensure you're setting the contraints.
 This means that you will need to hit the little golden stars after you place an element. It is the bar above the drag/drop editor.
 -Oliver
  */
+
 
 public class MainActivity extends AppCompatActivity implements
                                     GoogleApiClient.OnConnectionFailedListener,
@@ -57,8 +45,7 @@ public class MainActivity extends AppCompatActivity implements
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
     private static final int REQUEST_LOCATION_FINE_PERMISSION = 420;
     GeoHandler geoHandler = null;
-    PDAudioRecordingManager pdarm;
-    StreamToServer serv;
+    private Intent streamIntent = null;
     private boolean isRecording = false;
 
     // Requesting permissions
@@ -68,7 +55,6 @@ public class MainActivity extends AppCompatActivity implements
     // merged
     private TextView mStatusTextView;
     private ProgressDialog mProgressDialog;
-    private boolean mBroadcasting = false;
     private Boolean isSignedIn = false;
 
     // Set this = your local ip
@@ -76,18 +62,17 @@ public class MainActivity extends AppCompatActivity implements
     private static final String DEV_REAL_PHONE = "192.168.1.118"; // your local LAN IP (this is bryan's for example ;)
     private static final String PRODUCTION_SERVER = "138.68.200.193";
 
-    private final String externalServerIP = PRODUCTION_SERVER;
+    private final String externalServerIP = DEV_EMULATOR;
     private final String externalServerPort = "3000";
-
-    public String email;
-    public String user_name;
-
-    JSONObject nearbyResponse = null;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (savedInstanceState != null) {
+            isRecording = savedInstanceState.getBoolean("is_recording");
+        }
         setContentView(R.layout.activity_main);
         // Views
         mStatusTextView = (TextView) findViewById(R.id.status);
@@ -102,6 +87,7 @@ public class MainActivity extends AppCompatActivity implements
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
+                .requestIdToken(getString(R.string.CLIENT_ID))
                 .build();
         // [END configure_signin]
 
@@ -121,7 +107,8 @@ public class MainActivity extends AppCompatActivity implements
         signInButton.setSize(SignInButton.SIZE_STANDARD);
         // [END customize_button]
 
-	//merged
+
+        //merged
     }
 
 
@@ -189,11 +176,11 @@ public class MainActivity extends AppCompatActivity implements
         Log.d(TAG, "onConnectionFailed:" + connectionResult);
     }
 
-    @Override
+  /*  @Override
     protected void onResume() {
         super.onResume();
         hideProgressDialog();
-    }
+    }*/
 
     // [START onActivityResult]
     @Override
@@ -220,10 +207,13 @@ public class MainActivity extends AppCompatActivity implements
             GoogleSignInAccount acct = result.getSignInAccount();
             mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getDisplayName()));
             Log.d(TAG, "handleSignInResult: "+ acct.getEmail());
-            email = acct.getEmail();
-            Log.d(TAG, "handleSignInResult: "+ acct.getId());
-            Log.d(TAG, "handleSignInResult: getDisplayName "+ acct.getDisplayName());
-            user_name = acct.getDisplayName();
+            Log.d(TAG, "handleSignInResult: "+ acct.getIdToken());
+            /*
+                Send token to server?
+                Alternatively, just send on every request and call verification on that.
+             */
+            SharedData.setKey("google_api_client", mGoogleApiClient);
+            SharedData.setKey("google_acct", acct);
             isSignedIn = true;
             updateUI(true);
         } else {
@@ -262,43 +252,27 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-   /* public void checkAndSignOut(View view) {
-        if (mGoogleApiClient.isConnected()) {
-            signOut();
-            Intent intent = new Intent(this, LoginActivity.class);
-            startActivity(intent);
-            //signIn();
-        }
-    }*/
-
-
-   /*
-        Service Setup
-
-
-   boolean mIsBound = false;
-   StreamAudio mBoundService = new StreamAudio(pdarm, "http://" + externalServerIP + ":"  + externalServerPort + "/upload/", context, json_test);
-   private ServiceConnection mConnection = new ServiceConnection() {
-       public void onServiceConnected(ComponentName className, IBinder service) {
-           mBoundService = ((StreamAudio.StreamBinder) service).getService();
-
-       }
-       public void onServiceDisconnected(ComponentName className){
-           //do something....
-       }
-   };
-    void doBindService() {
-        bindService(new Intent(this, StreamAudio.class), mConnection, Context.BIND_AUTO_CREATE);
-        mIsBound = true;
+    /**
+     *  private Intent streamIntent = null;
+     *  private boolean isRecording = false;
+     * @param outState
+     */
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putParcelable("stream_intent", streamIntent);
+        outState.putBoolean("is_recording", isRecording);
+        super.onSaveInstanceState(outState);
     }
-    void doUnbindService() {
-        if (mIsBound) {
-            // Detach our existing connection.
-            unbindService(mConnection);
-            mIsBound = false;
-        }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        streamIntent = savedInstanceState.getParcelable("stream_intent");
+        isRecording = savedInstanceState.getBoolean("is_recording");
+
     }
-  */
+
+
 
     public void broadCast(View view) {
        //if(!permissionToRecordAccepted || !permissionForLocationAccepted) return;
@@ -383,29 +357,17 @@ public class MainActivity extends AppCompatActivity implements
     public void gotoMenu(View view) {
         if (isSignedIn) {
             Intent intent = new Intent(this, Menu.class);
-            Log.d("Menu", "clicked menu");
-            Bundle bundle = new Bundle();
-            bundle.putString("user_name", user_name);
-            intent.putExtras(bundle);
+            Log.d("Map", "clicked menu");
             startActivity(intent);
         } else {
            promptSignIn();
         }
     }
 
-   /* public void gotoLogin(View view) {
-        Intent intent = new Intent(this, LoginActivity.class);
-        Log.d("Menu", "clicked menu");
-        startActivity(intent);
-    }*/
-
-   //unfinished
     public void gotoCurrentEvents(View view) {
         if (isSignedIn) {
             Intent intent = new Intent(this, CurrentEvents.class);
             startActivity(intent);
-
-
         } else {
             promptSignIn();
         }
