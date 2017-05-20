@@ -11,6 +11,9 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.common.api.GoogleApiClient;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -23,6 +26,9 @@ import java.util.List;
 
 public class CurrentEvents extends Activity {
     ProgressDialog progress;
+    GoogleApiClient googleApiClient;
+    GoogleSignInAccount acct;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,6 +39,10 @@ public class CurrentEvents extends Activity {
         progress.setMessage("Hold on while we search..");
         progress.setCancelable(false);
         progress.show();
+        acct = (GoogleSignInAccount) SharedData.getKey("google_acct");
+        googleApiClient = (GoogleApiClient) SharedData.getKey("google_api_client");
+        Log.d("google_api_client:", String.valueOf(googleApiClient.isConnected()));
+        Log.d("google_acct:", String.valueOf(acct.getIdToken()));
     }
 
     private class CustomArrayAdaptor extends ArrayAdapter<String> {
@@ -70,6 +80,10 @@ public class CurrentEvents extends Activity {
         progress.setMessage("Hold on while we search..");
         progress.setCancelable(false);
         progress.show();
+    }
+    public void gotoMap(View view){
+        Intent intent = new Intent(this, EventMap.class);
+        startActivity(intent);
     }
 
     private void findCurrentEventsOnServer()

@@ -111,6 +111,8 @@
     <string name="disconnect">Disconnect</string>
     <string name="signed_in_fmt">Signed in as: %s</string>
     <string name="loading">Loading…</string>
+    <string name="title_activity_event_map">Active Events</string>
+    <string name="title_activity_maps">Map</string>
 
 
 </resources>

@@ -26,13 +26,13 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
-import org.json.JSONObject;
 
 /*
 Please note that if you want to change the draw/drop theme for this activity you need to ensure you're setting the contraints.
 This means that you will need to hit the little golden stars after you place an element. It is the bar above the drag/drop editor.
 -Oliver
  */
+
 
 public class MainActivity extends AppCompatActivity implements
                                     GoogleApiClient.OnConnectionFailedListener,
@@ -107,7 +107,8 @@ public class MainActivity extends AppCompatActivity implements
         signInButton.setSize(SignInButton.SIZE_STANDARD);
         // [END customize_button]
 
-	//merged
+
+        //merged
     }
 
 
@@ -211,7 +212,8 @@ public class MainActivity extends AppCompatActivity implements
                 Send token to server?
                 Alternatively, just send on every request and call verification on that.
              */
-
+            SharedData.setKey("google_api_client", mGoogleApiClient);
+            SharedData.setKey("google_acct", acct);
             isSignedIn = true;
             updateUI(true);
         } else {
@@ -355,7 +357,7 @@ public class MainActivity extends AppCompatActivity implements
     public void gotoMenu(View view) {
         if (isSignedIn) {
             Intent intent = new Intent(this, Menu.class);
-            Log.d("Menu", "clicked menu");
+            Log.d("Map", "clicked menu");
             startActivity(intent);
         } else {
            promptSignIn();

@@ -43,7 +43,7 @@ var app = express()
 
 var check_login = function (req, res, next) {
 	user_id_token = req.headers['auth-key'];
-	if (user_id_token) { //if they have token in headedrs
+	if (user_id_token) { //if they have token in headers
 		var client = new auth.OAuth2(CLIENT_ID, '', '');
 		client.verifyIdToken(user_id_token, CLIENT_ID, function(e, login) {
 			if (e) { // was there an error?
@@ -58,14 +58,33 @@ var check_login = function (req, res, next) {
 			}
 			else { // no error, check user id 
 				var payload = login.getPayload();
-				var userid = payload['sub'];
-				var name = payload['name'];
-				// check if user exists below this
-				db.query('SELECT * FROM pd_user WHERE google_id = ($<google_id>)', { google_id : userid })
+				var q_usr_create = {
+					g_email: payload['email'],
+					g_userid: payload['sub'],
+					f_name: payload['given_name'],
+					l_name: payload['family_name']
+				}
+			   /************************************************************
+				*	Check if user even exists in the database. If there isn't
+				*	any elements returned (no user exists) then we will create
+				*	one using the same exact information.
+				*	
+				* 		SQL: 'select_user' --> check_usr_exists.sql
+				*		Var: q_usr_create
+				***********************************************************/
+				db.any(select_user, q_usr_create)
 					.then(function (response_db) {
-						console.log(response_db);
+						console.log(response_db.length.valueOf())
+						if ( response_db.length.valueOf() < 1 ) {
+							// create the user
+							console.log("Creating user...");
+							db.one(create_user , q_usr_create)
+								.then(function(new_users_id){
+									console.log(`New user with ID: ${new_users_id.toString()}.`)
+								});
+						}
+						else { console.log(response_db[0]) }
 					});
-				console.log(`# User '${name}' with ID: ${userid} connected -- access granted.`);
 				next(); // go to next middleware
 			}
 		});
@@ -101,7 +120,7 @@ var do_log = function (req, res, next) {
 }
 
 // Run the middleware logger.
-app.use(do_log) //, check_login
+app.use(do_log, check_login) //
 
 /**
  *	Routes: Only parsing json automatically where needed.
@@ -130,6 +149,8 @@ var stopEvent = sql('./sql_queries/pd_event/update_status.sql');
 var getNearby = sql('./sql_queries/pd_event/get_nearby.sql');
 var init_upload = sql('./sql_queries/pd_event/init_upload.sql');
 var new_recording = sql('./sql_queries/pd_recording/new_recording.sql');
+var select_user = sql('./sql_queries/pd_user/check_usr_exists.sql');
+var create_user = sql('./sql_queries/pd_user/create_usr.sql');
 
 /**
  * Just returns all events, with associated user and recordings
