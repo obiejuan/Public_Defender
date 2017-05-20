@@ -79,6 +79,9 @@ public class MainActivity extends AppCompatActivity implements
     private final String externalServerIP = PRODUCTION_SERVER;
     private final String externalServerPort = "3000";
 
+    public String email;
+    public String user_name;
+
     JSONObject nearbyResponse = null;
 
 
@@ -217,7 +220,10 @@ public class MainActivity extends AppCompatActivity implements
             GoogleSignInAccount acct = result.getSignInAccount();
             mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getDisplayName()));
             Log.d(TAG, "handleSignInResult: "+ acct.getEmail());
+            email = acct.getEmail();
             Log.d(TAG, "handleSignInResult: "+ acct.getId());
+            Log.d(TAG, "handleSignInResult: getDisplayName "+ acct.getDisplayName());
+            user_name = acct.getDisplayName();
             isSignedIn = true;
             updateUI(true);
         } else {
@@ -378,6 +384,9 @@ public class MainActivity extends AppCompatActivity implements
         if (isSignedIn) {
             Intent intent = new Intent(this, Menu.class);
             Log.d("Menu", "clicked menu");
+            Bundle bundle = new Bundle();
+            bundle.putString("user_name", user_name);
+            intent.putExtras(bundle);
             startActivity(intent);
         } else {
            promptSignIn();
