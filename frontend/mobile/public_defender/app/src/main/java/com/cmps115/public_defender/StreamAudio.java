@@ -7,6 +7,8 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -36,6 +38,8 @@ public class StreamAudio extends Service {
     String recording_out;
     JSONObject jsonResponse = null;
     JSONObject jsonRequest = null;
+    GoogleSignInAccount acct;
+    String idToken = null;
 
 
     public class StreamBinder extends Binder {
@@ -70,6 +74,8 @@ public class StreamAudio extends Service {
     /** The service is starting, due to a call to startService() */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        acct = (GoogleSignInAccount) SharedData.getKey("google_acct");
+        idToken = acct.getIdToken();
         String url_data = intent.getStringExtra("host_string");
         recording_out = intent.getStringExtra("output_dir");
         String geo_data = intent.getStringExtra("geo");
@@ -133,7 +139,7 @@ public class StreamAudio extends Service {
         try {
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Content-Type", "application/json");
-            conn.setRequestProperty("Auth-Key", "");
+            conn.setRequestProperty("Auth-Key", idToken);
             conn.setFixedLengthStreamingMode(jsonRequest.toString().getBytes().length);
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
@@ -175,6 +181,7 @@ public class StreamAudio extends Service {
         try {
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
+            conn.setRequestProperty("Auth-Key", idToken);
             conn.setDoOutput(true);
             conn.setChunkedStreamingMode(0);
 

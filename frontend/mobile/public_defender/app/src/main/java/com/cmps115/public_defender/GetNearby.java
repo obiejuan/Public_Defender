@@ -1,5 +1,7 @@
 package com.cmps115.public_defender;
 
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -13,16 +15,21 @@ import java.net.URL;
  */
 
 public class GetNearby {
+    GoogleSignInAccount acct;
+    String idToken = null;
 
     public JSONObject makeRequest(JSONObject jsonRequest, URL url){
         HttpURLConnection conn = null;
         DataOutputStream out = null;
         JSONObject jsonResponse = new JSONObject();
+        acct = (GoogleSignInAccount) SharedData.getKey("google_acct");
+        idToken = acct.getIdToken();
 
 
         try {
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("Auth-Key", idToken);
             conn.setFixedLengthStreamingMode(jsonRequest.toString().getBytes().length);
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
