@@ -17,9 +17,7 @@ public class Menu extends AppCompatActivity {
     }
 
     public void goHome(View view) {
-        Intent intent = new Intent(this, MainActivity.class);
-        setContentView(R.layout.activity_main);
-        startActivity(intent);
+        finish();
     }
 
     public void gotoSettings(View view){

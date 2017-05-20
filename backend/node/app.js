@@ -6,14 +6,14 @@ var pgp = require('pg-promise')({
 	promiseLib: promise
 });
 
+
 /**
  * Google backend client verification
  */
 var GoogleAuth = require('google-auth-library');
 var auth = new GoogleAuth;
-var the_CLIENT_ID = "232250430081-g10nohsivb1mgbvdb718628ioicqs2em.apps.googleusercontent.com";
-var test_token = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjQyMTcxMDE1MzMwZjEwN2FhN2QxYjg1NGJmY2Y1NGE0ZjVhNTA3MDUifQ.eyJhenAiOiIyMzIyNTA0MzAwODEtdXFxZmQ3dWh0cmdwbGk3dWpoNzZ2dmV0MGszaTRvOTAuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiIyMzIyNTA0MzAwODEtZzEwbm9oc2l2YjFtZ2J2ZGI3MTg2Mjhpb2ljcXMyZW0uYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDU1OTY1ODg5NDc3NzAyODYwNDAiLCJoZCI6InVjc2MuZWR1IiwiZW1haWwiOiJibWNjb2lkQHVjc2MuZWR1IiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImlzcyI6Imh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbSIsImlhdCI6MTQ5NTE3MTU5MSwiZXhwIjoxNDk1MTc1MTkxLCJuYW1lIjoiQnJ5YW4gTWNjb2lkIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS8tampvTkQwYXJ0Sm8vQUFBQUFBQUFBQUkvQUFBQUFBQUFBQUEvQUhhbEdoclFNV3B5Q2hjNUxteTVORjVFeHRpUjFSZkpJdy9zOTYtYy9waG90by5qcGciLCJnaXZlbl9uYW1lIjoiQnJ5YW4iLCJmYW1pbHlfbmFtZSI6Ik1jY29pZCIsImxvY2FsZSI6ImVuIn0.IReSTU_pji6Copdv2JM8mpWP-5iQwt2-i0j04msOobG1f0bnBg_JNOvEbAt6UxuTnp0gOj1iSzxeNM6AdJt2OT6ZEx0lyc76EjfIrcLsuemKotNzlaMgUiyf8EMg3VXm7T9rYKe4hoZIclHhwcQ8-gSSNtcwZT34nhtOEX5CMdN3FyFIZxNn6eSrME3f2v58mxVp8C9L8rvo1LKwWKmLiQiUqxtNsllX_1jUvHTTLeIE_Yi51h5tzJeMslYBdvcIJebYoErPlyepRyFKIpmfXcWY75VWZM_6sQhhFWb9Uj-735T9GchB8Xcn8Sq6-ODFo7JpNK0UPScFgiAxf_Ne1Q";
-
+var CLIENT_ID = "232250430081-g10nohsivb1mgbvdb718628ioicqs2em.apps.googleusercontent.com";
+var test_token = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjJiMmU0ZDZmMTgyMWFkNGQ3NmQ0NTUzYzk1MWI3NTYyMmFjYjY1MzkifQ.eyJhenAiOiIyMzIyNTA0MzAwODEtdXFxZmQ3dWh0cmdwbGk3dWpoNzZ2dmV0MGszaTRvOTAuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiIyMzIyNTA0MzAwODEtZzEwbm9oc2l2YjFtZ2J2ZGI3MTg2Mjhpb2ljcXMyZW0uYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDU1OTY1ODg5NDc3NzAyODYwNDAiLCJoZCI6InVjc2MuZWR1IiwiZW1haWwiOiJibWNjb2lkQHVjc2MuZWR1IiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImlzcyI6Imh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbSIsImlhdCI6MTQ5NTIyMDIwNiwiZXhwIjoxNDk1MjIzODA2LCJuYW1lIjoiQnJ5YW4gTWNjb2lkIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS8tampvTkQwYXJ0Sm8vQUFBQUFBQUFBQUkvQUFBQUFBQUFBQUEvQUhhbEdoclFNV3B5Q2hjNUxteTVORjVFeHRpUjFSZkpJdy9zOTYtYy9waG90by5qcGciLCJnaXZlbl9uYW1lIjoiQnJ5YW4iLCJmYW1pbHlfbmFtZSI6Ik1jY29pZCIsImxvY2FsZSI6ImVuIn0.fig0YY_pohogRen64FlkhqWWQ_jKHh625ULAbjhuhaANpWnpLFMUFDdbMoipjN3JcbyrZOZXLp-SmmpmCQ9N6UbF7GvBIPx1vFj9objksrUoyxQ0jjjapt5AeOOavOrlgAk7IZHixm5V8-dRp2trZ3zVincLlCY769bWwMqRGm0omgQut_z9sTyZLnu_9lEz9S9nPHTwo5OJMctZjTW0ogrktY2_dK1bs-2afjcEo4IX2zOZxsddWpQ14KqQyOtSuPaQq57IoRy0fuC_evPXdp1qJrQd9GAsxFqWP23skS_06yNhs2a1vfNKcxNoJQXfxI3BA_DfW472AqwGXHLVJQ";
 // for unique recording identifier generation
 const uuid = require('uuid/v4');
 
@@ -40,6 +40,46 @@ var live_streams = {"1": test_buff}
 var db = pgp(cn);
 var app = express()
 
+
+var check_login = function (req, res, next) {
+	user_id_token = req.headers['auth-key'];
+	if (user_id_token) { //if they have token in headedrs
+		var client = new auth.OAuth2(CLIENT_ID, '', '');
+		client.verifyIdToken(user_id_token, CLIENT_ID, function(e, login) {
+			if (e) { // was there an error?
+				console.log(e);
+				res.status(403)
+				.json({
+					status: 'Forbidden',
+					msg: 'Invalid access token provided.',
+					error: e.toString()
+				});
+				return;
+			}
+			else { // no error, check user id 
+				var payload = login.getPayload();
+				var userid = payload['sub'];
+				var name = payload['name'];
+				// check if user exists below this
+				db.query('SELECT * FROM pd_user WHERE google_id = ($<google_id>)', { google_id : userid })
+					.then(function (response_db) {
+						console.log(response_db);
+					});
+				console.log(`# User '${name}' with ID: ${userid} connected -- access granted.`);
+				next(); // go to next middleware
+			}
+		});
+	}
+	else {
+		res.status(403)
+				.json({
+					status: 'Forbidden',
+					msg: 'No access token provided.'
+				});
+		return;
+	}
+}
+
 /* Payton's middleware logging function */
 var do_log = function (req, res, next) {
 	var ip_regex = new RegExp('((?:[0-9]{1,3}\.?){4})');
@@ -56,12 +96,12 @@ var do_log = function (req, res, next) {
 	 * Write a console logging (middleware) function.
 	 * 
 	 */
-	console.log(`${curr_date} [${r_method}] request in <${r_path}> by ${r_ipaddr}`);
-	next()
+	console.log(`(${curr_date}) from [${r_ipaddr}]: [${r_method}] --> ${r_path}`);
+	next();
 }
 
 // Run the middleware logger.
-app.use(do_log)
+app.use(do_log) //, check_login
 
 /**
  *	Routes: Only parsing json automatically where needed.
@@ -161,7 +201,7 @@ function lg_in (e, login) {
  * email    | character varying(255) | 
  * 
  *********************************************************************************************/
-app.post('/user/', function (req, res, next) {
+app.post('/users/', function (req, res, next) {
 	user_id_token = req.body.user_id_token;
 	/**
 	 * TODO:
@@ -171,19 +211,8 @@ app.post('/user/', function (req, res, next) {
 	 * 4.) if not create user
 	 * 
 	 */
-	
 
-	var client = new auth.OAuth2(the_CLIENT_ID, '', '');
-	client.verifyIdToken(user_id_token, the_CLIENT_ID, function(e, login) {
-		var payload = login.getPayload();
-		var userid = payload['sub'];
-		console.log(e);
-		console.log(userid);
-	});
-
-
-	user_promise = db.query('INSERT INTO pd_user (auth_key, email) VALUES ($1, $2)', [user.auth_key, user.email]).then(function (response_db) {
-		db.any('select * from pd_user').then(function (data) {
+	db.any('select * from pd_user').then(function (data) {
 			res.status(200)
 				.json({
 					status: 'success',
@@ -200,17 +229,6 @@ app.post('/user/', function (req, res, next) {
 					msg: err,
 				})
 		}); //end catch of db.any then 
-
-	}).catch(function (err) {
-		console.log(err)
-		return err;
-	}).then(function (err) { // error resonses
-		res.status(500)
-			.json({
-				status: 'error',
-				msg: err,
-			})
-	});
 });
 
 /******************************************************************************************************

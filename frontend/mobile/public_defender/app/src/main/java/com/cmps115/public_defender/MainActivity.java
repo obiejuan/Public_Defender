@@ -2,20 +2,12 @@ package com.cmps115.public_defender;
 
 import android.Manifest;
 import android.app.ProgressDialog;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.os.AsyncTask;
-import android.os.IBinder;
-import android.renderscript.ScriptGroup;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -34,12 +26,8 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
-import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
 /*
 Please note that if you want to change the draw/drop theme for this activity you need to ensure you're setting the contraints.
 This means that you will need to hit the little golden stars after you place an element. It is the bar above the drag/drop editor.
@@ -57,8 +45,7 @@ public class MainActivity extends AppCompatActivity implements
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
     private static final int REQUEST_LOCATION_FINE_PERMISSION = 420;
     GeoHandler geoHandler = null;
-    PDAudioRecordingManager pdarm;
-    StreamToServer serv;
+    private Intent streamIntent = null;
     private boolean isRecording = false;
 
     // Requesting permissions
@@ -68,7 +55,6 @@ public class MainActivity extends AppCompatActivity implements
     // merged
     private TextView mStatusTextView;
     private ProgressDialog mProgressDialog;
-    private boolean mBroadcasting = false;
     private Boolean isSignedIn = false;
 
     // Set this = your local ip
@@ -79,12 +65,14 @@ public class MainActivity extends AppCompatActivity implements
     private final String externalServerIP = DEV_EMULATOR;
     private final String externalServerPort = "3000";
 
-    JSONObject nearbyResponse = null;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (savedInstanceState != null) {
+            isRecording = savedInstanceState.getBoolean("is_recording");
+        }
         setContentView(R.layout.activity_main);
         // Views
         mStatusTextView = (TextView) findViewById(R.id.status);
@@ -187,11 +175,11 @@ public class MainActivity extends AppCompatActivity implements
         Log.d(TAG, "onConnectionFailed:" + connectionResult);
     }
 
-    @Override
+  /*  @Override
     protected void onResume() {
         super.onResume();
         hideProgressDialog();
-    }
+    }*/
 
     // [START onActivityResult]
     @Override
@@ -262,85 +250,59 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-   /* public void checkAndSignOut(View view) {
-        if (mGoogleApiClient.isConnected()) {
-            signOut();
-            Intent intent = new Intent(this, LoginActivity.class);
-            startActivity(intent);
-            //signIn();
-        }
-    }*/
-
-
-   /*
-        Service Setup
-
-
-   boolean mIsBound = false;
-   StreamAudio mBoundService = new StreamAudio(pdarm, "http://" + externalServerIP + ":"  + externalServerPort + "/upload/", context, json_test);
-   private ServiceConnection mConnection = new ServiceConnection() {
-       public void onServiceConnected(ComponentName className, IBinder service) {
-           mBoundService = ((StreamAudio.StreamBinder) service).getService();
-
-       }
-       public void onServiceDisconnected(ComponentName className){
-           //do something....
-       }
-   };
-    void doBindService() {
-        bindService(new Intent(this, StreamAudio.class), mConnection, Context.BIND_AUTO_CREATE);
-        mIsBound = true;
+    /**
+     *  private Intent streamIntent = null;
+     *  private boolean isRecording = false;
+     * @param outState
+     */
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putParcelable("stream_intent", streamIntent);
+        outState.putBoolean("is_recording", isRecording);
+        super.onSaveInstanceState(outState);
     }
-    void doUnbindService() {
-        if (mIsBound) {
-            // Detach our existing connection.
-            unbindService(mConnection);
-            mIsBound = false;
-        }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        streamIntent = savedInstanceState.getParcelable("stream_intent");
+        isRecording = savedInstanceState.getBoolean("is_recording");
+
     }
-  */
+
+
 
     public void broadCast(View view) {
        //if(!permissionToRecordAccepted || !permissionForLocationAccepted) return;
 
        Button r_button = (Button)findViewById(R.id.record_button);
        Context context = getApplicationContext();
-       CharSequence text = "Hit Record";
-       int duration = Toast.LENGTH_SHORT;
-       Toast toast = Toast.makeText(context, text, duration);
-       toast.show();
 
        // Get the geolocation
        double[] geo = {0.0, 0.0};
        if(geoHandler.hasLocationOn())
            geo = geoHandler.getGeolocation();
 
-       if(!(geo[0] == 0.0 && geo[1] == 0.0))
-           Log.d("[GEO]", (geo[0] + ", " + geo[1]));
-       // test data
-
        String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
 
+        if (streamIntent == null) {
+            streamIntent = new Intent(this, StreamAudio.class);
+        }
 
        if (!isRecording) {
            // USAGE EXAMPLE:
            Log.d(TAG, "broadCast: It should start...");
-           //pdarm = new PDAudioRecordingManager();
-
-           Intent streamIntent = new Intent(this, StreamAudio.class);
            String full_url = "http://" + externalServerIP + ":"  + externalServerPort + "/upload/";
            streamIntent.putExtra("host_string", full_url);
            streamIntent.putExtra("output_dir", context.getExternalCacheDir().getAbsolutePath());
            streamIntent.putExtra("geo", geo_data);
            startService(streamIntent);
-
            r_button.setText("Stop Recording.");
        }
        if (isRecording) {
            // USAGE EXAMPLE:
            Log.d(TAG, "broadCast: It should STOP recording...");
-           //serv.stopStreamAudio();
-           stopService(new Intent(this, StreamAudio.class));
+           stopService(streamIntent);
            r_button.setText("Record");
        }
        isRecording = !isRecording;
@@ -390,19 +352,10 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-   /* public void gotoLogin(View view) {
-        Intent intent = new Intent(this, LoginActivity.class);
-        Log.d("Menu", "clicked menu");
-        startActivity(intent);
-    }*/
-
-   //unfinished
     public void gotoCurrentEvents(View view) {
         if (isSignedIn) {
             Intent intent = new Intent(this, CurrentEvents.class);
             startActivity(intent);
-
-
         } else {
             Context context = getApplicationContext();
             CharSequence text = "You must sign in";

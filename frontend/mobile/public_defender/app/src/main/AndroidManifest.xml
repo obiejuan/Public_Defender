@@ -32,15 +32,19 @@
             android:screenOrientation="portrait"/>
 
         <activity android:name=".Settings"
+            android:parentActivityName=".Menu"
             android:screenOrientation="portrait" />
 
         <activity android:name=".Menu"
+            android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait" />
 
         <activity android:name=".CurrentEvents"
+            android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".FileBrowser"
+            android:parentActivityName=".Menu"
             android:label="public_defender"
             android:theme="@style/AppTheme"
             android:screenOrientation="portrait" />
@@ -48,7 +52,7 @@
         <service
             android:name=".StreamAudio"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="false"/>
     </application>
 
 </manifest>

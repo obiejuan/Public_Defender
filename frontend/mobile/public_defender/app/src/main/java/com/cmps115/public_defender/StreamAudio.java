@@ -34,7 +34,6 @@ public class StreamAudio extends Service {
     boolean isStreaming = false;
     URL url = null;
     String recording_out;
-    Context context = null;
     JSONObject jsonResponse = null;
     JSONObject jsonRequest = null;
 
@@ -89,7 +88,6 @@ public class StreamAudio extends Service {
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-
         initStreamThread.start();
         try {
             initStreamThread.join();
@@ -106,7 +104,7 @@ public class StreamAudio extends Service {
         }
         isStreaming = true;
         streamToServThread.start();
-        return mStartMode;
+        return START_REDELIVER_INTENT;
     }
 
     /** Called when The service is no longer used and is being destroyed */
@@ -135,6 +133,7 @@ public class StreamAudio extends Service {
         try {
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("Auth-Key", "");
             conn.setFixedLengthStreamingMode(jsonRequest.toString().getBytes().length);
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
