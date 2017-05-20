@@ -75,7 +75,6 @@ public class MainActivity extends AppCompatActivity implements
         }
         setContentView(R.layout.activity_main);
         // Views
-        mStatusTextView = (TextView) findViewById(R.id.status);
 
         // Button listeners
         findViewById(R.id.sign_in_button).setOnClickListener(this);
@@ -205,7 +204,6 @@ public class MainActivity extends AppCompatActivity implements
         if (result.isSuccess()) {
             // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
-            mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getDisplayName()));
             Log.d(TAG, "handleSignInResult: "+ acct.getEmail());
             Log.d(TAG, "handleSignInResult: "+ acct.getIdToken());
             /*
@@ -214,6 +212,7 @@ public class MainActivity extends AppCompatActivity implements
              */
             SharedData.setKey("google_api_client", mGoogleApiClient);
             SharedData.setKey("google_acct", acct);
+            Log.d("accct email: ", acct.getEmail());
             isSignedIn = true;
             updateUI(true);
         } else {
@@ -229,7 +228,6 @@ public class MainActivity extends AppCompatActivity implements
             findViewById(R.id.sign_in_button).setVisibility(View.GONE);
             findViewById(R.id.sign_out_and_disconnect).setVisibility(View.VISIBLE);
         } else {
-            mStatusTextView.setText(R.string.signed_out);
 
             findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
             findViewById(R.id.sign_out_and_disconnect).setVisibility(View.GONE);
