@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -24,10 +25,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class CurrentEvents extends Activity {
+public class CurrentEvents extends AppCompatActivity {
     ProgressDialog progress;
     GoogleApiClient googleApiClient;
     GoogleSignInAccount acct;
+    GeoHandler geoHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +45,16 @@ public class CurrentEvents extends Activity {
         googleApiClient = (GoogleApiClient) SharedData.getKey("google_api_client");
         Log.d("google_api_client:", String.valueOf(googleApiClient.isConnected()));
         Log.d("google_acct:", String.valueOf(acct.getIdToken()));
+    }
+
+    @Override
+    protected void onStart(){
+        super.onStart();
+       /* if (geoHandler == null) {
+            geoHandler = new GeoHandler(this);
+        }*/
+        geoHandler = new GeoHandler(this);
+
     }
 
     private class CustomArrayAdaptor extends ArrayAdapter<String> {
@@ -88,13 +100,19 @@ public class CurrentEvents extends Activity {
 
     private void findCurrentEventsOnServer()
     {
+        geoHandler = new GeoHandler(this);
         double[] geo = {0.0, 0.0};
+        if(geoHandler.hasLocationOn())
+            geo = geoHandler.getGeolocation();
+        SharedData.setKey("location", geo);
         String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
+        Log.d("[GEO_DATA]", geo_data);
+
 
         JSONObject jsonRequest = new JSONObject();
         try {
-            jsonRequest.put("location", geo_data);
-            jsonRequest.put("distance", 100); //TODO hardcoded distance
+            jsonRequest.put("current_location", geo_data);
+            jsonRequest.put("distance", 10); //TODO hardcoded distance
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -105,12 +123,14 @@ public class CurrentEvents extends Activity {
         ListView listview = (ListView) findViewById(R.id.current_events);
         //String[] values = {"Test1", "Test2"};
         JSONArray event_list = events.getJSONArray("data");
-
+        SharedData.setKey("event_list", event_list);
         final ArrayList<String> list = new ArrayList<String>();
         //event_list.getJSONObject();
         for (int i = 0; i < event_list.length(); ++i) {
-            list.add(event_list.getJSONObject(i).getString("event_id"));
+            JSONObject this_obj = event_list.getJSONObject(i);
+            list.add("event# " + this_obj.getString("event_id") + " ----> " + this_obj.getString("event_dist")+ " mi.");
         }
+
         final CustomArrayAdaptor adapter = new CustomArrayAdaptor(this, android.R.layout.simple_list_item_1, list);
         listview.setAdapter(adapter);
     }
@@ -123,7 +143,7 @@ public class CurrentEvents extends Activity {
             JSONObject input = input_json[number_req-1]; //only process the last (most recent) request
             URL url = null;
             try {
-                url = new URL("http://10.0.2.2:3000/nearby/");
+                url = new URL("http://192.168.1.118:3000/nearby/");
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }

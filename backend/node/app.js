@@ -186,6 +186,8 @@ function nearby(req, res, next) {
 		current_location: req.body.current_location,
 		distance: req.body.distance
 	};
+	console.log(query);
+
 	db.any(getNearby, query)
 		.then(function (data) {
 			res.status(200)

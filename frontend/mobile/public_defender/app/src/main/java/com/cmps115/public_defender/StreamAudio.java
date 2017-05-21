@@ -102,7 +102,7 @@ public class StreamAudio extends Service {
             e.printStackTrace();
         }
         try {
-            url = new URL(url.toString() + jsonResponse.get("url").toString());
+            url = new URL(url.toString() + jsonResponse.get("url").toString()); //source of errors
         } catch (JSONException e) {
             e.printStackTrace();
         }

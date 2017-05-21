@@ -2,13 +2,26 @@ package com.cmps115.public_defender;
 
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.util.Log;
 
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.json.JSONObject;
 
 
 public class EventMap extends FragmentActivity implements OnMapReadyCallback {
@@ -37,13 +50,65 @@ public class EventMap extends FragmentActivity implements OnMapReadyCallback {
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        JSONArray events = (JSONArray) SharedData.getKey("event_list");
 
-        //add makers
+        // Add our current location, with a title, and small 'snippet'. Center Camera on us.
+        double[] point_user = (double[]) SharedData.getKey("location");
+        LatLng user_mark = new LatLng(point_user[0], point_user[1]);
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
 
-        //move camera to where we are
+
+
+        //mMap.moveCamera(CameraUpdateFactory.newLatLng(user_mark));
+
+        for (int i = 0; i < events.length(); ++i) {
+            try {
+                String point = events.getJSONObject(i).getString("location");
+                double[] point_numeric = parse_point(point);
+                LatLng mark = new LatLng(point_numeric[0], point_numeric[1]);
+                builder.include(mark);
+                Log.d("[MapPoint]", point);
+                //String title = events.getJSONObject(i).getString();
+                mMap.addMarker(new MarkerOptions().position(mark));
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        Marker you = mMap.addMarker(new MarkerOptions()
+                .position(user_mark)
+                .title("You")
+                .snippet("This is where you are located.")
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+        builder.include(user_mark);
+        LatLngBounds bounds = builder.build();
+        CircleOptions a = new CircleOptions();
+        a.center(user_mark);
+        a.radius(1000*10); //meters/mile constant put here
+        mMap.addCircle(a);
+        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 200));
+        //mMap.moveCamera(CameraUpdateFactory.zoomBy(1.0F));
+        //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(user_mark, 13));
+        /*
+        */
+
+    }
+    public double[] parse_point(String point_string) {
+        double[] out = new double[2];
+        String pattern = "(-?\\d*\\.\\d*)";
+
+        // Create a Pattern object
+        Pattern r = Pattern.compile(pattern);
+
+        // Now create matcher object.
+        Matcher m = r.matcher(point_string);
+        int count = 0;
+        while (m.find()) {
+            Log.d("[PARSE]", m.group(0));
+            out[count] = Double.parseDouble(m.group(0));
+            count++;
+        }
+        return out;
     }
 }
+
