@@ -161,53 +161,7 @@ public class PDAudioRecordingManager {
 
         int byteRate = RECORDER_SAMPLERATE * RECORDER_CHANNELS * bufferSize / 2;
 
-        byte[] waveHeader = new byte[]
-                {
-                        'R',
-                        'I',
-                        'F',
-                        'F',
-                        (byte) (36 + (pcmData.length & 0xff)),
-                        (byte) ((pcmData.length >> 8) & 0xff),
-                        (byte) ((pcmData.length >> 16) & 0xff),
-                        (byte) ((pcmData.length >> 24) & 0xff),
-                        'W',
-                        'A',
-                        'V',
-                        'E',
-                        'f',
-                        'm',
-                        't',
-                        ' ',
-                        16,
-                        0,
-                        0,
-                        0,
-                        1,
-                        0,
-                        RECORDER_CHANNELS,
-                        0,
-                        (byte) (RECORDER_SAMPLERATE & 0xff),
-                        (byte) ((RECORDER_SAMPLERATE >> 8) & 0xff),
-                        (byte) ((RECORDER_SAMPLERATE >> 16) & 0xff),
-                        (byte) ((RECORDER_SAMPLERATE >> 24) & 0xff),
-                        (byte) (byteRate & 0xff),
-                        (byte) ((byteRate >> 8) & 0xff),
-                        (byte) ((byteRate >> 16) & 0xff),
-                        (byte) ((byteRate >> 24) & 0xff),
-                        (byte) (2 * 16 / 8),
-                        0,
-                        16,
-                        0,
-                        'd',
-                        'a',
-                        't',
-                        'a',
-                        (byte) (pcmData.length & 0xff),
-                        (byte) ((pcmData.length >> 8) & 0xff),
-                        (byte) ((pcmData.length >> 16) & 0xff),
-                        (byte) ((pcmData.length >> 24) & 0xff)
-                };
+        byte[] waveHeader = generateHeader(pcmData, RECORDER_CHANNELS, byteRate);
 
         DataOutputStream wavStream;
         try {
@@ -228,10 +182,69 @@ public class PDAudioRecordingManager {
     }
 
 
+    public static byte[] generateHeader(byte[] pcmData, int rec_channels, int byteRate)
+    {
+        return new byte[]
+            {
+                    'R',
+                    'I',
+                    'F',
+                    'F',
+                    (byte) (36 + (pcmData.length & 0xff)),
+                    (byte) ((pcmData.length >> 8) & 0xff),
+                    (byte) ((pcmData.length >> 16) & 0xff),
+                    (byte) ((pcmData.length >> 24) & 0xff),
+                    'W',
+                    'A',
+                    'V',
+                    'E',
+                    'f',
+                    'm',
+                    't',
+                    ' ',
+                    16,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    (byte) rec_channels,
+                    0,
+                    (byte) (RECORDER_SAMPLERATE & 0xff),
+                    (byte) ((RECORDER_SAMPLERATE >> 8) & 0xff),
+                    (byte) ((RECORDER_SAMPLERATE >> 16) & 0xff),
+                    (byte) ((RECORDER_SAMPLERATE >> 24) & 0xff),
+                    (byte) (byteRate & 0xff),
+                    (byte) ((byteRate >> 8) & 0xff),
+                    (byte) ((byteRate >> 16) & 0xff),
+                    (byte) ((byteRate >> 24) & 0xff),
+                    (byte) (2 * 16 / 8),
+                    0,
+                    16,
+                    0,
+                    'd',
+                    'a',
+                    't',
+                    'a',
+                    (byte) (pcmData.length & 0xff),
+                    (byte) ((pcmData.length >> 8) & 0xff),
+                    (byte) ((pcmData.length >> 16) & 0xff),
+                    (byte) ((pcmData.length >> 24) & 0xff)
+            };
+    }
+
     /* Returns a file located at our app's external cache directory */
-    private File createPcmFile(String output_dir) {
+    public static File createPcmFile(String output_dir) {
         //File file = null;
         String timeStamp = new SimpleDateFormat("MM-dd-yyyy_HH-mm", Locale.US).format(new Date());
-        return (new File(output_dir + "/" + timeStamp + ".pcm"));
+        File createdFile = new File(output_dir + "/" + timeStamp + ".pcm");
+        try {
+            createdFile.createNewFile();
+        }
+        catch (IOException ioe)
+        {
+            ioe.printStackTrace();
+        }
+        return createdFile;
     }
 }
