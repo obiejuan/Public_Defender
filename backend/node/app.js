@@ -195,10 +195,11 @@ function nearby(req, res, next) {
 		current_location: req.body.current_location,
 		distance: req.body.distance
 	};
-	console.log(query);
+	//console.log(query);
 
 	db.any(getNearby, query)
 		.then(function (data) {
+			console.log(data.length);
 			res.status(200)
 				.json({
 					status: 'success',
@@ -206,7 +207,7 @@ function nearby(req, res, next) {
 				});
 		})
 		.catch(function (err) {
-			return next(err);
+			console.log(err);
 		}).then(function (err) { // error resonses
 			res.status(500)
 				.json({
@@ -216,11 +217,6 @@ function nearby(req, res, next) {
 		}).catch(function (err) {});
 }
 
-function lg_in (e, login) {
-	var payload = login.getPayload();
-	var userid = payload['sub'];
-	console.log(e);
-}
 
 /*********************************************************************************************
  * User creation:
@@ -310,6 +306,7 @@ function upload (req, res, next) {
 					active: true,
 					timestamp: date
 				};
+				console.log(record_data);
 				return t.one(init_upload, record_data, c => +c.event_id) //create event --> event_id
 			}).then(function (id) {
 				console.log(unique_token)

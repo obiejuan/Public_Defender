@@ -123,6 +123,7 @@ public class CurrentEvents extends AppCompatActivity {
         ListView listview = (ListView) findViewById(R.id.current_events);
         //String[] values = {"Test1", "Test2"};
         JSONArray event_list = events.getJSONArray("data");
+        event_list.length();
         SharedData.setKey("event_list", event_list);
         final ArrayList<String> list = new ArrayList<String>();
         //event_list.getJSONObject();
@@ -143,7 +144,7 @@ public class CurrentEvents extends AppCompatActivity {
             JSONObject input = input_json[number_req-1]; //only process the last (most recent) request
             URL url = null;
             try {
-                url = new URL("http://10.0.2.2:3000/nearby/");
+                url = new URL("http://192.168.1.118:3000/nearby/");
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }

@@ -51,28 +51,26 @@ public class EventMap extends FragmentActivity implements OnMapReadyCallback {
         mMap = googleMap;
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         JSONArray events = (JSONArray) SharedData.getKey("event_list");
-
+        //events.length();
         // Add our current location, with a title, and small 'snippet'. Center Camera on us.
         double[] point_user = (double[]) SharedData.getKey("location");
         LatLng user_mark = new LatLng(point_user[0], point_user[1]);
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
-
-
-
         //mMap.moveCamera(CameraUpdateFactory.newLatLng(user_mark));
+        if (events != null) {
+            for (int i = 0; i < events.length(); ++i) {
+                try {
+                    String point = events.getJSONObject(i).getString("location");
+                    double[] point_numeric = parse_point(point);
+                    LatLng mark = new LatLng(point_numeric[0], point_numeric[1]);
+                    builder.include(mark);
+                    Log.d("[MapPoint]", point);
+                    //String title = events.getJSONObject(i).getString();
+                    mMap.addMarker(new MarkerOptions().position(mark));
 
-        for (int i = 0; i < events.length(); ++i) {
-            try {
-                String point = events.getJSONObject(i).getString("location");
-                double[] point_numeric = parse_point(point);
-                LatLng mark = new LatLng(point_numeric[0], point_numeric[1]);
-                builder.include(mark);
-                Log.d("[MapPoint]", point);
-                //String title = events.getJSONObject(i).getString();
-                mMap.addMarker(new MarkerOptions().position(mark));
-
-            } catch (JSONException e) {
-                e.printStackTrace();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         }
         Marker you = mMap.addMarker(new MarkerOptions()
@@ -87,10 +85,6 @@ public class EventMap extends FragmentActivity implements OnMapReadyCallback {
         a.radius(1000*10); //meters/mile constant put here
         mMap.addCircle(a);
         mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 200));
-        //mMap.moveCamera(CameraUpdateFactory.zoomBy(1.0F));
-        //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(user_mark, 13));
-        /*
-        */
 
     }
     public double[] parse_point(String point_string) {

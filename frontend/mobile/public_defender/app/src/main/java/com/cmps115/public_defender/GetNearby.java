@@ -26,6 +26,9 @@ public class GetNearby {
         JSONObject jsonResponse = new JSONObject();
         acct = (GoogleSignInAccount) SharedData.getKey("google_acct");
         idToken = acct.getIdToken();
+        BufferedReader in = null;
+        StringBuffer response = new StringBuffer();
+        int resp_code;
 
         try {
             conn = (HttpURLConnection) url.openConnection();
@@ -40,16 +43,17 @@ public class GetNearby {
             out.writeBytes(jsonRequest.toString());
             out.flush();
             out.close();
-            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            BufferedReader err = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
-            String inputLine;
-            StringBuffer response = new StringBuffer();
-            while ((inputLine = in.readLine()) != null || (inputLine = err.readLine()) != null) {
-                response.append(inputLine);
-                Log.d("[NEARBY]", inputLine);
-            }
-            if (conn.getResponseCode() != 200) {
+            if ((resp_code = conn.getResponseCode()) != 200) {
                 Log.d("[NEARBY]", "THERE WAS AN ERROR!");
+                in = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+            }
+            else {
+                in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            }
+
+            String inputLine;
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
             }
             in.close();
             jsonResponse = new JSONObject(response.toString());
