@@ -40,6 +40,8 @@ var live_streams = {"1": test_buff}
 var db = pgp(cn);
 var app = express()
 
+/*var server = require('http').createServer(app);
+var io = require('socket.io')(server);*/
 
 var check_login = function (req, res, next) {
 	user_id_token = req.headers['auth-key'];
@@ -78,14 +80,21 @@ var check_login = function (req, res, next) {
 						if ( response_db.length.valueOf() < 1 ) {
 							// create the user
 							console.log("Creating user...");
-							db.one(create_user , q_usr_create)
-								.then(function(new_users_id){
-									console.log(`New user with ID: ${new_users_id.toString()}.`)
+							console.log(q_usr_create);
+							db.one(create_user , q_usr_create, c => c)
+								.then( (c) => {
+									console.log(`New user: ${c}.`);
+									next();
+								}).catch( (err) => {
+									console.err(err);
+									next(err);
 								});
 						}
-						else { console.log(response_db[0]) }
+						else { 
+							console.log(response_db[0]) 
+							next();
+						}
 					});
-				next(); // go to next middleware
 			}
 		});
 	}
@@ -279,28 +288,40 @@ app.post('/users/', function (req, res, next) {
  * 
  **/
 function upload (req, res, next) {
-
-	var { location, user } = req.body
+/*	res.status(500).json({
+						status: 'error',
+						msg: "some error message",
+						upload_token: null,
+						url: null,
+					});*/
+	var { current_location, user } = req.body
 	var event_id
 	date = new Date()
+	var unique_token
 	
 	db.tx(function (t) {
-		return t.one(select_user, {g_userid: user}, c=> +c.user_id) //google_id --> pd_user_id
+		return t.one(select_user, {g_userid: user}, c => +c.user_id) //google_id --> pd_user_id
 			.then(function (userid){
 				console.log(userid);
 				unique_token = userid + '_' + uuid()
-				var record_data = {
+				record_data = {
 					user_id: userid,
-					geo: location,
+					geo: current_location,
 					active: true,
 					timestamp: date
 				};
 				return t.one(init_upload, record_data, c => +c.event_id) //create event --> event_id
 			}).then(function (id) {
-				event_id = id
-				return t.none(new_recording,{ id, unique_token });
+				console.log(unique_token)
+				event_id = id;
+				recording_data = {
+					event_id: id,
+					filename: unique_token
+				}
+				return t.none(new_recording, recording_data);
 			});
 		}).then(function () {
+			console.log(event_id, unique_token);
 			res.status(200)
 				.json({
 					status: 'success',
@@ -309,7 +330,7 @@ function upload (req, res, next) {
 				});
 		})
 		.catch(function (err) {
-			return err;
+			console.error(err);
 		}).then(function (err) { 
 			res.status(500)
 				.json({
@@ -410,6 +431,10 @@ app.post('/upload/:event/:id/', recieve_stream);
 /** 
  * Run the actual server
  **/
+/*
+io.on('connection', function(){  });
+server.listen(3000);
+*/
 app.listen(3000, function () {
 	console.log('Currently defending on port 3000!!')
 });

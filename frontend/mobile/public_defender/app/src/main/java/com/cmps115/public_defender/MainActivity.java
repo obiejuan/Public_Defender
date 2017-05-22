@@ -2,9 +2,12 @@ package com.cmps115.public_defender;
 
 import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -26,6 +29,10 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+
+import org.json.JSONException;
+
+import java.net.MalformedURLException;
 
 /*
 Please note that if you want to change the draw/drop theme for this activity you need to ensure you're setting the contraints.
@@ -62,9 +69,10 @@ public class MainActivity extends AppCompatActivity implements
     private static final String DEV_REAL_PHONE = "192.168.1.118"; // your local LAN IP (this is bryan's for example ;)
     private static final String PRODUCTION_SERVER = "138.68.200.193";
 
-    private final String externalServerIP = DEV_REAL_PHONE;
+    private final String externalServerIP = DEV_EMULATOR;
     private final String externalServerPort = "3000";
-
+    boolean mBound = false;
+    StreamAudio mService = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -148,6 +156,10 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onStart() {
         super.onStart();
+
+        //bind service
+        Intent streamIntent = new Intent(this, StreamAudio.class);
+        bindService(streamIntent, mConnection, Context.BIND_AUTO_CREATE);
 
         // Ask for the initial permission
         askForPermission(Manifest.permission.RECORD_AUDIO, REQUEST_RECORD_AUDIO_PERMISSION);
@@ -285,7 +297,22 @@ public class MainActivity extends AppCompatActivity implements
 
     }
 
+    private ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            StreamAudio.StreamBinder binder = (StreamAudio.StreamBinder) service;
+            mService = binder.getService();
+            mBound = true;
+        }
 
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mService.stopStream();
+            mBound = false;
+        }
+    };
 
     public void broadCast(View view) {
        //if(!permissionToRecordAccepted || !permissionForLocationAccepted) return;
@@ -293,10 +320,6 @@ public class MainActivity extends AppCompatActivity implements
         if (isSignedIn) {
             Button r_button = (Button)findViewById(R.id.record_button);
             Context context = getApplicationContext();
-            CharSequence text = "Hit Record";
-            int duration = Toast.LENGTH_SHORT;
-            Toast toast = Toast.makeText(context, text, duration);
-            toast.show();
 
             // Get the geolocation
             double[] geo = {0.0, 0.0};
@@ -309,26 +332,41 @@ public class MainActivity extends AppCompatActivity implements
 
             String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
 
-
             if (!isRecording) {
                 // USAGE EXAMPLE:
                 Log.d(TAG, "broadCast: It should start...");
-                //pdarm = new PDAudioRecordingManager();
-
                 Intent streamIntent = new Intent(this, StreamAudio.class);
                 String full_url = "http://" + externalServerIP + ":"  + externalServerPort + "/upload/";
                 streamIntent.putExtra("host_string", full_url);
                 streamIntent.putExtra("output_dir", context.getExternalCacheDir().getAbsolutePath());
                 streamIntent.putExtra("geo", geo_data);
-                startService(streamIntent);
-
+                try {
+                    mService.init_stream(streamIntent);
+                    Log.d(TAG, "INIT STREAM STARTED!!");
+                } catch (JSONException e) { // json
+                    e.printStackTrace();
+                } catch (MalformedURLException e) { //url
+                    e.printStackTrace();
+                } catch (InterruptedException e) { //join
+                    e.printStackTrace();
+                } catch (StreamException e) { // error response
+                    Log.d(TAG, e.getMessage());
+                    // handle error
+                    isRecording = false;
+                    CharSequence error_txt = "Hit Record";
+                    int duration_error = Toast.LENGTH_LONG;
+                    Toast toast = Toast.makeText(context, error_txt, duration_error);
+                    toast.show();
+                    r_button.setText("Record");
+                    return;
+                }
+                mService.stream_recording();
                 r_button.setText("Stop Recording.");
             }
             if (isRecording) {
                 // USAGE EXAMPLE:
                 Log.d(TAG, "broadCast: It should STOP recording...");
-                //serv.stopStreamAudio();
-                stopService(new Intent(this, StreamAudio.class));
+                mService.stopStream();
                 r_button.setText("Record");
             }
             isRecording = !isRecording;

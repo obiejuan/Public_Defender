@@ -1,5 +1,7 @@
 package com.cmps115.public_defender;
 
+import android.util.Log;
+
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 
 import org.json.JSONObject;
@@ -39,11 +41,15 @@ public class GetNearby {
             out.flush();
             out.close();
             BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            BufferedReader err = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
             String inputLine;
             StringBuffer response = new StringBuffer();
-
-            while ((inputLine = in.readLine()) != null) {
+            while ((inputLine = in.readLine()) != null || (inputLine = err.readLine()) != null) {
                 response.append(inputLine);
+                Log.d("[NEARBY]", inputLine);
+            }
+            if (conn.getResponseCode() != 200) {
+                Log.d("[NEARBY]", "THERE WAS AN ERROR!");
             }
             in.close();
             jsonResponse = new JSONObject(response.toString());

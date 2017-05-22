@@ -223,17 +223,6 @@ ALTER TABLE ONLY pd_event ALTER COLUMN event_id SET DEFAULT nextval('pd_event_id
 ALTER TABLE ONLY pd_user ALTER COLUMN user_id SET DEFAULT nextval('pd_user_id_seq'::regclass);
 
 
---
--- TOC entry 2189 (class 0 OID 16473)
--- Dependencies: 183
--- Data for Name: pd_event; Type: TABLE DATA; Schema: public; Owner: node
---
-
-COPY pd_event (event_id, location, pd_user_id, active, event_date) FROM stdin;
-5	(-97.510185000000007,35.496025000000003)	1	f	2017-05-02 23:59:59
-6	(-97.5080389999999966,35.5237619999999978)	1	f	2017-05-02 23:59:59
-7	(-98.4732060000000047,35.8664130000000014)	1	f	2017-05-02 23:59:59
-\.
 
 
 --
@@ -242,32 +231,9 @@ COPY pd_event (event_id, location, pd_user_id, active, event_date) FROM stdin;
 -- Name: pd_event_id_seq; Type: SEQUENCE SET; Schema: public; Owner: node
 --
 
-SELECT pg_catalog.setval('pd_event_id_seq', 7, true);
+SELECT pg_catalog.setval('pd_event_id_seq', 1, true);
 
 
---
--- TOC entry 2191 (class 0 OID 16479)
--- Dependencies: 185
--- Data for Name: pd_recording; Type: TABLE DATA; Schema: public; Owner: node
---
-
-COPY pd_recording (event_id, filename) FROM stdin;
-5	1_fc3950d9-39f4-4eb8-b2f0-1d4abc78df91.wav
-6	1_facdb840-cb33-44af-a483-3a60614fccf5.wav
-7	1_f2aea21c-65b8-44ee-9a00-cc2e55563c72.wav
-\.
-
-
---
--- TOC entry 2192 (class 0 OID 16482)
--- Dependencies: 186
--- Data for Name: pd_user; Type: TABLE DATA; Schema: public; Owner: node
---
-
-COPY pd_user (user_id, auth_key, email, google_id, google_firstname, google_lastname, date_created) FROM stdin;
-1	78yahsdf76gahsdf	blah@gmail.com	1234	First	User	2017-05-20 01:52:26.179531+00
-2	7hu8ansdf79hpa9su8dfjasndf	someother@gmail.com	4321	Next	User	2017-05-20 01:52:26.179531+00
-\.
 
 
 --

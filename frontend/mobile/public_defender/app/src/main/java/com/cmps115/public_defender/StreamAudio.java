@@ -8,6 +8,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.common.ErrorDialogFragment;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,13 +23,11 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+
+
 public class StreamAudio extends Service {
-    /** indicates how to behave if the service is killed */
-    int mStartMode;
     /** interface for clients that bind */
     private final IBinder mBinder = new StreamBinder();
-    /** indicates whether onRebind should be used */
-    boolean mAllowRebind;
 
     Thread streamToServThread = null;
     Thread initStreamThread = null;
@@ -36,8 +35,10 @@ public class StreamAudio extends Service {
     boolean isStreaming = false;
     URL url = null;
     String recording_out;
+
     JSONObject jsonResponse = null;
     JSONObject jsonRequest = null;
+
     GoogleSignInAccount acct;
     String idToken = null;
 
@@ -51,6 +52,9 @@ public class StreamAudio extends Service {
     /** Called when the service is being created. */
     @Override
     public void onCreate() {
+        init_threads();
+    }
+    private void init_threads(){
         // Threads
         streamToServThread = new Thread(new Runnable() {
             public void run() {
@@ -67,50 +71,49 @@ public class StreamAudio extends Service {
                 }
             }
         });
-
     }
-
-
-    /** The service is starting, due to a call to startService() */
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    public void init_stream(Intent intent)
+            throws JSONException, MalformedURLException,
+                    InterruptedException, StreamException {
         acct = (GoogleSignInAccount) SharedData.getKey("google_acct");
         idToken = acct.getIdToken();
         String userId = acct.getId();
         String url_data = intent.getStringExtra("host_string");
         recording_out = intent.getStringExtra("output_dir");
         String geo_data = intent.getStringExtra("geo");
-        rec = new PDAudioRecordingManager();
-
+        rec = new PDAudioRecordingManager(); // exception from here?
         jsonRequest = new JSONObject();
-        try {
-            jsonRequest.put("location", geo_data);
-            jsonRequest.put("user", userId);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            url = new URL(url_data);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+        jsonRequest.put("current_location", geo_data);
+        jsonRequest.put("user", userId);
+        url = new URL(url_data);
         initStreamThread.start();
-        try {
-            initStreamThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        initStreamThread.join();
+        if (jsonResponse.get("status").equals("error")) {
+            throw new StreamException(jsonResponse.getString("msg"));
         }
-        try {
-            url = new URL(url.toString() + jsonResponse.get("url").toString()); //source of errors
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        catch (MalformedURLException e1) {
-            e1.printStackTrace();
-        }
+        Log.d("[GETURL**]", jsonResponse.toString());
+        url = new URL(url.toString() + jsonResponse.get("url").toString()); //source of errors
+    }
+
+    public void stream_recording(){
         isStreaming = true;
         streamToServThread.start();
+    }
+    public void stopStream(){
+        if (rec != null) {
+            rec.stopRecording();
+            isStreaming = false;
+            streamToServThread.interrupt();
+        }
+        jsonResponse = null;
+        init_threads();
+        url = null;
+        //this.stopSelf();
+    }
+
+    /** The service is starting, due to a call to startService() */
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
         return START_REDELIVER_INTENT;
     }
 
@@ -123,6 +126,8 @@ public class StreamAudio extends Service {
             streamToServThread.interrupt();
         }
     }
+
+
     @Override
     public IBinder onBind(Intent intent) {
         return mBinder;
@@ -136,6 +141,9 @@ public class StreamAudio extends Service {
     private void initStream() throws java.net.SocketTimeoutException {
         HttpURLConnection conn = null;
         DataOutputStream out = null;
+        StringBuffer response = new StringBuffer();
+        BufferedReader in = null;
+        int resp_code;
         Log.d("[initStream]", "initStream: Starting connect...");
         try {
             conn = (HttpURLConnection) url.openConnection();
@@ -150,25 +158,27 @@ public class StreamAudio extends Service {
             out.writeBytes(jsonRequest.toString());
             out.flush();
             out.close();
-            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            String inputLine;
-            StringBuffer response = new StringBuffer();
+            if ((resp_code = conn.getResponseCode()) != 200) {
+                Log.d("[INITSTREAM]", "THERE WAS AN ERROR!");
+                in = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+            }
+            else {
+                in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            }
 
+            String inputLine;
             while ((inputLine = in.readLine()) != null) {
                 response.append(inputLine);
-                Log.d("[initStream]", inputLine);
             }
             in.close();
             jsonResponse = new JSONObject(response.toString());
-            Log.d("[initStream]", jsonResponse.toString());
         }
-        // return error to user about unable to connect?
         finally {
             Log.d("[initStream]", "initStream: ending connect...");
+            Log.d("ENDSTREAM", response.toString());
             conn.disconnect();
             return;
         }
-
     }
     /*******************************
      *  Streaming Function:
