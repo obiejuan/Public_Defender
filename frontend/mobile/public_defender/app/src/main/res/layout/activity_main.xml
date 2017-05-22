@@ -8,6 +8,27 @@
     tools:layout_editor_absoluteX="0dp"
     tools:layout_editor_absoluteY="25dp">
 
+    <resources>
+        <string-array name="activities_array">
+            <item>My Recordings</item>
+        </string-array>
+    </resources>
+
+    <Spinner
+        android:id="@+id/menu_spinner"
+        android:layout_width="182dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="9dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginTop="9dp"
+        app:layout_constraintBottom_toTopOf="@+id/guideline2"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_constraintBottom_creator="1"
+        tools:layout_constraintRight_creator="1"
+        tools:layout_constraintTop_creator="1" />
+
 
     <Button
         android:id="@+id/record_button"
@@ -27,14 +48,14 @@
         android:textSize="40sp"
         android:enabled="false"
         android:textStyle="bold"
-        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:layout_constraintLeft_creator="1"
         tools:layout_constraintRight_creator="1"
         tools:layout_constraintTop_creator="1"
-        app:layout_constraintVertical_bias="0.762"
+        app:layout_constraintVertical_bias="0.0"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         tools:layout_constraintBottom_creator="1"
@@ -42,9 +63,9 @@
 
     <TextView
         android:id="@+id/status"
-        android:layout_width="345dp"
-        android:layout_height="25dp"
-        android:layout_marginBottom="13dp"
+        android:layout_width="181dp"
+        android:layout_height="35dp"
+        android:layout_marginBottom="9dp"
         android:layout_marginLeft="16dp"
         android:layout_marginStart="16dp"
         android:text="@string/signed_out"
@@ -54,8 +75,7 @@
         app:layout_constraintBottom_toTopOf="@+id/guideline2"
         app:layout_constraintLeft_toLeftOf="parent"
         tools:layout_constraintBottom_creator="1"
-        tools:layout_constraintLeft_creator="1"
-        tools:layout_editor_absoluteY="15dp" />
+        tools:layout_constraintLeft_creator="1" />
 
     <Button
         android:id="@+id/button5"

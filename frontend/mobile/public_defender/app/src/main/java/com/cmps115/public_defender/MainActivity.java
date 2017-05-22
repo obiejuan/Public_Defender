@@ -12,7 +12,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,8 +37,8 @@ This means that you will need to hit the little golden stars after you place an 
 
 
 public class MainActivity extends AppCompatActivity implements
-                                    GoogleApiClient.OnConnectionFailedListener,
-                                                        View.OnClickListener {
+        GoogleApiClient.OnConnectionFailedListener,
+        View.OnClickListener {
 
     private static final String TAG = "SignInActivity";
     private static final int RC_SIGN_IN = 9001;
@@ -62,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements
     private static final String DEV_REAL_PHONE = "192.168.1.118"; // your local LAN IP (this is bryan's for example ;)
     private static final String PRODUCTION_SERVER = "138.68.200.193";
 
-    private final String externalServerIP = DEV_REAL_PHONE;
+    private final String externalServerIP = PRODUCTION_SERVER;
     private final String externalServerPort = "3000";
 
 
@@ -112,12 +114,22 @@ public class MainActivity extends AppCompatActivity implements
         //merged
     }
 
+//    Spinner spinner = (Spinner) findViewById(R.id.menu_spinner);
+//    // Create an ArrayAdapter using the string array and a default spinner layout
+//    ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+//            R.array.activities_array, android.R.layout.simple_spinner_item);
+//// Specify the layout to use when the list of choices appears
+//adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//// Apply the adapter to the spinner
+//spinner.setAdapter(adapter);
+
 
     // [START signIn]
     private void signIn() {
         Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
+
     // [END signIn]
     private void changeButtonState(boolean b) {
         Button rec = (Button) findViewById(R.id.record_button);
@@ -179,6 +191,7 @@ public class MainActivity extends AppCompatActivity implements
             geoHandler = new GeoHandler(this);
         }
     }
+
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         // An unresolvable error has occurred and Google APIs (including Sign-In) will not
@@ -216,8 +229,8 @@ public class MainActivity extends AppCompatActivity implements
             // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
             mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getEmail()));
-            Log.d(TAG, "handleSignInResult: "+ acct.getEmail());
-            Log.d(TAG, "handleSignInResult: "+ acct.getIdToken());
+            Log.d(TAG, "handleSignInResult: " + acct.getEmail());
+            Log.d(TAG, "handleSignInResult: " + acct.getIdToken());
             /*
                 Send token to server?
                 Alternatively, just send on every request and call verification on that.
@@ -230,7 +243,7 @@ public class MainActivity extends AppCompatActivity implements
             updateUI(true);
         } else {
             // Signed out, show unauthenticated UI.
-           changeButtonState(false);
+            changeButtonState(false);
             isSignedIn = false;
             updateUI(false);
         }
@@ -266,8 +279,9 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     /**
-     *  private Intent streamIntent = null;
-     *  private boolean isRecording = false;
+     * private Intent streamIntent = null;
+     * private boolean isRecording = false;
+     *
      * @param outState
      */
     @Override
@@ -286,12 +300,11 @@ public class MainActivity extends AppCompatActivity implements
     }
 
 
-
     public void broadCast(View view) {
-       //if(!permissionToRecordAccepted || !permissionForLocationAccepted) return;
+        //if(!permissionToRecordAccepted || !permissionForLocationAccepted) return;
 
         if (isSignedIn) {
-            Button r_button = (Button)findViewById(R.id.record_button);
+            Button r_button = (Button) findViewById(R.id.record_button);
             Context context = getApplicationContext();
             CharSequence text = "Hit Record";
             int duration = Toast.LENGTH_SHORT;
@@ -300,10 +313,10 @@ public class MainActivity extends AppCompatActivity implements
 
             // Get the geolocation
             double[] geo = {0.0, 0.0};
-            if(geoHandler.hasLocationOn())
+            if (geoHandler.hasLocationOn())
                 geo = geoHandler.getGeolocation();
 
-            if(!(geo[0] == 0.0 && geo[1] == 0.0))
+            if (!(geo[0] == 0.0 && geo[1] == 0.0))
                 Log.d("[GEO]", (geo[0] + ", " + geo[1]));
             // test data
 
@@ -316,7 +329,7 @@ public class MainActivity extends AppCompatActivity implements
                 //pdarm = new PDAudioRecordingManager();
 
                 Intent streamIntent = new Intent(this, StreamAudio.class);
-                String full_url = "http://" + externalServerIP + ":"  + externalServerPort + "/upload/";
+                String full_url = "http://" + externalServerIP + ":" + externalServerPort + "/upload/";
                 streamIntent.putExtra("host_string", full_url);
                 streamIntent.putExtra("output_dir", context.getExternalCacheDir().getAbsolutePath());
                 streamIntent.putExtra("geo", geo_data);
@@ -373,7 +386,7 @@ public class MainActivity extends AppCompatActivity implements
             Log.d("Map", "clicked menu");
             startActivity(intent);
         } else {
-           promptSignIn();
+            promptSignIn();
         }
     }
 
@@ -386,7 +399,7 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    public void promptSignIn(){
+    public void promptSignIn() {
         Context context = getApplicationContext();
         CharSequence text = "You must sign in";
         int duration = Toast.LENGTH_SHORT;
@@ -447,9 +460,9 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode){
+        switch (requestCode) {
             case REQUEST_RECORD_AUDIO_PERMISSION:
-                permissionToRecordAccepted  = (grantResults[0] == PackageManager.PERMISSION_GRANTED);
+                permissionToRecordAccepted = (grantResults[0] == PackageManager.PERMISSION_GRANTED);
 
                 // Request the next premission (cascading due to its async nature)
                 askForPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_LOCATION_FINE_PERMISSION);
@@ -463,7 +476,7 @@ public class MainActivity extends AppCompatActivity implements
                 Log.d("Geolocation", "Lat: " + location[0] + " Long: " + location[1]);
                 break;
         }
-        if (!permissionToRecordAccepted ) finish();
+        if (!permissionToRecordAccepted) finish();
     }
 
 
