@@ -30,9 +30,9 @@
 
     <LinearLayout
         android:id="@+id/linearLayout"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="54dp"
-        android:layout_marginBottom="4dp"
+        android:layout_marginBottom="0dp"
         android:orientation="horizontal"
         android:weightSum="1"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -66,36 +66,45 @@
             app:layout_constraintLeft_toLeftOf="@+id/parent"
             tools:layout_constraintBottom_creator="1"
             tools:layout_constraintLeft_creator="1" />
+
+        <Button
+            android:id="@+id/button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_weight="0.14"
+            android:onClick="gotoMap"
+            android:text=">" />
     </LinearLayout>
 
     <ListView
         android:id="@+id/current_events"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="64dp"
-        android:background="@color/common_google_signin_btn_text_dark_disabled"
+        android:background="@color/blue_grey_900"
         android:divider="@color/common_google_signin_btn_text_light_default"
-        android:dividerHeight="1dp"
-        android:elevation="3dp"
-        android:fadingEdgeLength="0dp"
+        android:dividerHeight="-10dp"
+        android:elevation="0dp"
+        android:fadeScrollbars="true"
+        android:requiresFadingEdge="vertical"
+        android:fadingEdgeLength="48dp"
         android:footerDividersEnabled="false"
         android:headerDividersEnabled="false"
-        android:outlineProvider="paddedBounds"
+        android:overScrollMode="never"
         app:layout_constraintBottom_toTopOf="@+id/linearLayout"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintVertical_bias="0.0"
-        tools:layout_constraintTop_creator="1"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintBottom_creator="1"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        tools:layout_constraintLeft_creator="1"
         app:layout_constraintTop_toTopOf="@+id/textView3"
-        android:layout_marginLeft="8dp"
-        android:layout_marginRight="8dp"
-        app:layout_constraintHorizontal_bias="0.0" />
+        app:layout_constraintVertical_bias="0.0"
+        tools:layout_constraintBottom_creator="1"
+        tools:layout_constraintLeft_creator="1"
+        tools:layout_constraintRight_creator="1"
+        tools:layout_constraintTop_creator="1" />
 
     <android.support.constraint.Guideline
         android:id="@+id/guideline3"
@@ -103,6 +112,8 @@
         android:layout_height="wrap_content"
         android:foregroundTint="@color/colorAccent"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="20dp" />
+        app:layout_constraintGuide_begin="20dp"
+        tools:layout_editor_absoluteY="20dp"
+        tools:layout_editor_absoluteX="0dp" />
 
 </android.support.constraint.ConstraintLayout>

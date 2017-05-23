@@ -8,12 +8,15 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -29,10 +32,10 @@ import java.util.HashMap;
 import java.util.List;
 
 public class CurrentEvents extends AppCompatActivity {
-    ProgressDialog progress;
-    GoogleApiClient googleApiClient;
-    GoogleSignInAccount acct;
-    GeoHandler geoHandler;
+    private ProgressDialog progress;
+    private GoogleApiClient googleApiClient;
+    private GoogleSignInAccount acct;
+    private GeoHandler geoHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,11 +52,7 @@ public class CurrentEvents extends AppCompatActivity {
     @Override
     protected void onStart(){
         super.onStart();
-       /* if (geoHandler == null) {
-            geoHandler = new GeoHandler(this);
-        }*/
         geoHandler = new GeoHandler(this);
-
     }
 
     private class CustomArrayAdaptor extends ArrayAdapter<String> {
@@ -61,7 +60,6 @@ public class CurrentEvents extends AppCompatActivity {
         Context context;
         int viewId;
         List<String> data;
-
         HashMap<String, Integer> mIdMap = new HashMap<String, Integer>();
 
         public CustomArrayAdaptor(Context context, int viewId, List<String> objects) {
