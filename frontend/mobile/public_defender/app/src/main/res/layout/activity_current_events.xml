@@ -29,18 +29,18 @@
         app:layout_constraintHorizontal_bias="0.561" />
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:id="@+id/linearLayout"
+        android:layout_width="match_parent"
         android:layout_height="54dp"
         android:layout_marginBottom="4dp"
         android:orientation="horizontal"
+        android:weightSum="1"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        android:weightSum="1"
-        app:layout_constraintHorizontal_bias="0.0"
-        android:id="@+id/linearLayout"
-        tools:layout_constraintRight_creator="1"
-        tools:layout_constraintLeft_creator="1">
+        tools:layout_constraintLeft_creator="1"
+        tools:layout_constraintRight_creator="1">
 
         <Button
             android:id="@+id/current_events_home"
@@ -72,8 +72,8 @@
         android:id="@+id/current_events"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginBottom="72dp"
-        android:layout_marginTop="67dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="64dp"
         android:background="@color/common_google_signin_btn_text_dark_disabled"
         android:divider="@color/common_google_signin_btn_text_light_default"
         android:dividerHeight="1dp"
@@ -94,27 +94,15 @@
         tools:layout_constraintLeft_creator="1"
         app:layout_constraintTop_toTopOf="@+id/textView3"
         android:layout_marginLeft="8dp"
-        android:layout_marginRight="8dp" />
+        android:layout_marginRight="8dp"
+        app:layout_constraintHorizontal_bias="0.0" />
 
     <android.support.constraint.Guideline
+        android:id="@+id/guideline3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/guideline3"
-        app:layout_constraintGuide_begin="20dp"
-        android:orientation="horizontal" />
-
-    <Button
-        android:id="@+id/button"
-        android:layout_width="223dp"
-        android:layout_height="53dp"
-        android:text=" Map"
-        app:layout_constraintLeft_toLeftOf="parent"
-        android:layout_marginRight="8dp"
-        android:onClick="gotoMap"
-        app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginTop="10dp"
-        app:layout_constraintTop_toBottomOf="@+id/current_events"
-        app:layout_constraintHorizontal_bias="0.512"
-        tools:layout_editor_absoluteY="451dp" />
+        android:foregroundTint="@color/colorAccent"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="20dp" />
 
 </android.support.constraint.ConstraintLayout>
