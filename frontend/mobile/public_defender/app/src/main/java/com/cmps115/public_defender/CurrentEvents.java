@@ -112,7 +112,7 @@ public class CurrentEvents extends AppCompatActivity {
         JSONObject jsonRequest = new JSONObject();
         try {
             jsonRequest.put("current_location", geo_data);
-            jsonRequest.put("distance", 10); //TODO hardcoded distance
+            jsonRequest.put("distance", 100); //TODO hardcoded distance
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -122,6 +122,9 @@ public class CurrentEvents extends AppCompatActivity {
     private void populateListViewWithCurrentEvents(JSONObject events) throws JSONException {
         ListView listview = (ListView) findViewById(R.id.current_events);
         //String[] values = {"Test1", "Test2"};
+        if (events.has("timeOut")) {
+            return;
+        }
         JSONArray event_list = events.getJSONArray("data");
         event_list.length();
         SharedData.setKey("event_list", event_list);
@@ -129,7 +132,9 @@ public class CurrentEvents extends AppCompatActivity {
         //event_list.getJSONObject();
         for (int i = 0; i < event_list.length(); ++i) {
             JSONObject this_obj = event_list.getJSONObject(i);
-            list.add("event# " + this_obj.getString("event_id") + " ----> " + this_obj.getString("event_dist")+ " mi.");
+            list.add("event# " + this_obj.getString("event_id") + " ----> " +
+                    String.format("%.2f", Double.parseDouble(this_obj.getString("event_dist")))
+                    + " mi.");
         }
 
         final CustomArrayAdaptor adapter = new CustomArrayAdaptor(this, android.R.layout.simple_list_item_1, list);

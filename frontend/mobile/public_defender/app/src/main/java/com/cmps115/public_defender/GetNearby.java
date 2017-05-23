@@ -10,7 +10,9 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by bryan on 5/3/17.
@@ -37,7 +39,7 @@ public class GetNearby {
             conn.setFixedLengthStreamingMode(jsonRequest.toString().getBytes().length);
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
-            conn.setConnectTimeout(5000); //set timeout to 5 seconds
+            conn.setConnectTimeout(3000); //set timeout to 5 seconds
 
             out = new DataOutputStream(conn.getOutputStream());
             out.writeBytes(jsonRequest.toString());
@@ -57,6 +59,10 @@ public class GetNearby {
             }
             in.close();
             jsonResponse = new JSONObject(response.toString());
+        }
+        catch (SocketTimeoutException e) {
+            jsonResponse = new JSONObject();
+            jsonResponse.put("timeOut", true);
         }
         // return error to user about unable to connect?
         finally {

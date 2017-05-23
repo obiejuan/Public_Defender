@@ -152,7 +152,7 @@ public class StreamAudio extends Service {
             conn.setFixedLengthStreamingMode(jsonRequest.toString().getBytes().length);
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
-            conn.setConnectTimeout(5000); //set timeout to 5 seconds
+            conn.setConnectTimeout(3000); //set timeout to 5 seconds
 
             out = new DataOutputStream(conn.getOutputStream());
             out.writeBytes(jsonRequest.toString());
