@@ -40,14 +40,11 @@ var live_streams = {"1": test_buff}
 var db = pgp(cn);
 var app = express()
 
-/*var server = require('http').createServer(app);
-var io = require('socket.io')(server);*/
-
-var check_login = function (req, res, next) {
+var check_login = (req, res, next) => {
 	user_id_token = req.headers['auth-key'];
 	if (user_id_token) { //if they have token in headers
 		var client = new auth.OAuth2(CLIENT_ID, '', '');
-		client.verifyIdToken(user_id_token, CLIENT_ID, function(e, login) {
+		client.verifyIdToken(user_id_token, CLIENT_ID, (e, login) => {
 			if (e) { // was there an error?
 				console.log(e);
 				res.status(403)
@@ -75,7 +72,7 @@ var check_login = function (req, res, next) {
 				*		Var: q_usr_create
 				***********************************************************/
 				db.any(select_user, q_usr_create)
-					.then(function (response_db) {
+					.then( (response_db) => {
 						console.log(response_db.length.valueOf())
 						if ( response_db.length.valueOf() < 1 ) {
 							// create the user
@@ -109,7 +106,7 @@ var check_login = function (req, res, next) {
 }
 
 /* Payton's middleware logging function */
-var do_log = function (req, res, next) {
+var do_log = (req, res, next) => {
 	var ip_regex = new RegExp('((?:[0-9]{1,3}\.?){4})');
 	var r_method = req.method;
 	var r_path = req.path;
@@ -134,7 +131,7 @@ app.use(do_log, check_login) //
 /**
  *	Routes: Only parsing json automatically where needed.
  */
-app.post('/upload/', bodyParser.json())
+app.post('/upload/', bodyParser.json(), upload)
 app.post('/user/', bodyParser.json())
 app.post('/nearby/', bodyParser.json(), nearby)
 
@@ -164,9 +161,9 @@ var create_user = sql('./sql_queries/pd_user/create_usr.sql');
 /**
  * Just returns all events, with associated user and recordings
  */
-app.get('/', function (req, res, next) { 
+app.get('/', (req, res, next) => { 
 	db.any('select * FROM pd_user INNER JOIN pd_event ON pd_event.pd_user_id=pd_user.user_id INNER JOIN pd_recording ON pd_event.event_id=pd_recording.event_id WHERE pd_event.active=false')
-		.then(function (data) {
+		.then( (data) => {
 			res.status(200)
 				.json({
 					status: 'success',
@@ -174,7 +171,7 @@ app.get('/', function (req, res, next) {
 					message: 'All events included.'
 				});
 		})
-		.catch(function (err) { 
+		.catch( (err) => { 
 			return next(err);
 		});
 })
@@ -198,7 +195,7 @@ function nearby(req, res, next) {
 	//console.log(query);
 
 	db.any(getNearby, query)
-		.then(function (data) {
+		.then( (data) => {
 			console.log(data.length);
 			res.status(200)
 				.json({
@@ -206,20 +203,20 @@ function nearby(req, res, next) {
 					data: data,
 				});
 		})
-		.catch(function (err) {
+		.catch( (err) => {
 			console.log(err);
-		}).then(function (err) { // error resonses
+		}).then( (err) => { // error resonses
 			res.status(500)
 				.json({
 					status: 'error',
 					msg: err,
 				})
-		}).catch(function (err) {});
+		}).catch( (err) => {});
 }
 
 
 /*********************************************************************************************
- * User creation:
+ * Lists all
  *  
  * Table "public.pd_user"
  *  Column  |          Type          |                      Modifiers                       
@@ -229,34 +226,23 @@ function nearby(req, res, next) {
  * email    | character varying(255) | 
  * 
  *********************************************************************************************/
-app.post('/users/', function (req, res, next) {
-	user_id_token = req.body.user_id_token;
-	/**
-	 * TODO:
-	 * 1.) check if key is valid
-	 * 2.) parse details
-	 * 3.) check if user exists
-	 * 4.) if not create user
-	 * 
-	 */
-
-	db.any('select * from pd_user').then(function (data) {
+app.post('/users/', (req, res, next) => {
+	db.any('select * from pd_user').then( (data) => {
 			res.status(200)
 				.json({
 					status: 'success',
 					data: data
 				});
-			console.log(user_promise);
-		}).catch(function (err) {
+		}).catch( (err) => {
 			console.log(err)
 			return err;
-		}).then(function (err) { // error resonses
+		}).then( (err) => { // error resonses
 			res.status(500)
 				.json({
 					status: 'error',
 					msg: err,
 				})
-		}); //end catch of db.any then 
+		}).catch( (err) => {console.error(err)} ); //end catch of db.any then 
 });
 
 /******************************************************************************************************
@@ -295,9 +281,9 @@ function upload (req, res, next) {
 	date = new Date()
 	var unique_token
 	
-	db.tx(function (t) {
+	db.tx( (t) => {
 		return t.one(select_user, {g_userid: user}, c => +c.user_id) //google_id --> pd_user_id
-			.then(function (userid){
+			.then( (userid) => {
 				console.log(userid);
 				unique_token = userid + '_' + uuid()
 				record_data = {
@@ -308,7 +294,7 @@ function upload (req, res, next) {
 				};
 				console.log(record_data);
 				return t.one(init_upload, record_data, c => +c.event_id) //create event --> event_id
-			}).then(function (id) {
+			}).then( (id) => {
 				console.log(unique_token)
 				event_id = id;
 				recording_data = {
@@ -317,7 +303,7 @@ function upload (req, res, next) {
 				}
 				return t.none(new_recording, recording_data);
 			});
-		}).then(function () {
+		}).then( () => {
 			console.log(event_id, unique_token);
 			res.status(200)
 				.json({
@@ -326,9 +312,9 @@ function upload (req, res, next) {
 					url: `${event_id}/${unique_token}/` //unique upload url
 				});
 		})
-		.catch(function (err) {
+		.catch( (err) => {
 			console.error(err);
-		}).then(function (err) { 
+		}).then( (err) => { 
 			res.status(500)
 				.json({
 					status: 'error',
@@ -336,9 +322,8 @@ function upload (req, res, next) {
 					upload_token: null,
 					url: null,
 				});
-		}).catch(function () {});
+		}).catch( () => {});
 }
-app.post('/upload/', upload);
 
 /*****************************************************
  * Table "public.pd_recording"
@@ -378,7 +363,7 @@ function recieve_stream (req, res, next) {
 	 * and also keeps track of the number of chunks. 
 	 * @param {bytes[]} chunk
 	 **/
-	req.on('data', function (chunk) {
+	req.on('data', (chunk) => {
 		console.log(tick + ": " + (chunk.length / 1024).toFixed(2) + " KiB")
 		total_bytes = total_bytes + chunk.length
 		tick++;
@@ -399,7 +384,7 @@ function recieve_stream (req, res, next) {
 	/**
 	 * Called when the connection / request is ended. 
 	 **/
-	req.on('end', function () {
+	req.on('end',  () => {
 		db.none(stopEvent, stop_data)
 			.then(() => {
 				console.log("Successful pd_event table update.");
@@ -411,7 +396,7 @@ function recieve_stream (req, res, next) {
 		console.log("End: " + (total_bytes / 1024).toFixed(2) + " KiB transfered.")
 		console.log("") //newline for prettier output on console
 	});
-	req.on('error', function (err) {
+	req.on('error', (err) => {
 		errorMsg = err
 		console.log("Error: " + err)
 	});
@@ -432,6 +417,6 @@ app.post('/upload/:event/:id/', recieve_stream);
 io.on('connection', function(){  });
 server.listen(3000);
 */
-app.listen(3000, function () {
+app.listen(3000, () => {
 	console.log('Currently defending on port 3000!!')
 });

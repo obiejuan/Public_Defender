@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 
 
@@ -63,12 +64,7 @@ public class StreamAudio extends Service {
         });
         initStreamThread = new Thread(new Runnable() {
             public void run() {
-                try {
-                    initStream();
-                }
-                catch (java.net.SocketTimeoutException timeOutErr) {
-                    timeOutErr.printStackTrace();
-                }
+                initStream();
             }
         });
     }
@@ -88,11 +84,22 @@ public class StreamAudio extends Service {
         url = new URL(url_data);
         initStreamThread.start();
         initStreamThread.join();
-        if (jsonResponse.get("status").equals("error")) {
-            throw new StreamException(jsonResponse.getString("msg"));
+
+        if (jsonResponse != null) {
+            if (jsonResponse.get("status").equals("error")) {
+                throw new StreamException(jsonResponse.getString("msg"));
+            }
+            else if (jsonResponse.has("timeOut")) {
+                throw new StreamException("Connection timed out. ");
+            }
+            else { //no error (best case)
+                Log.d("[GETURL**]", jsonResponse.toString());
+                url = new URL(url.toString() + jsonResponse.get("url").toString()); //source of errors
+            }
         }
-        Log.d("[GETURL**]", jsonResponse.toString());
-        url = new URL(url.toString() + jsonResponse.get("url").toString()); //source of errors
+        else {
+            throw new StreamException("Connection error. Are you connected to the internet?");
+        }
     }
 
     public void stream_recording(){
@@ -127,7 +134,6 @@ public class StreamAudio extends Service {
         }
     }
 
-
     @Override
     public IBinder onBind(Intent intent) {
         return mBinder;
@@ -138,7 +144,7 @@ public class StreamAudio extends Service {
      *  Establish an event, verify credentials (unfinished), and
      *  populates the POST url for the streaming portion.
      */
-    private void initStream() throws java.net.SocketTimeoutException {
+    private void initStream() {
         HttpURLConnection conn = null;
         DataOutputStream out = null;
         StringBuffer response = new StringBuffer();
@@ -152,7 +158,7 @@ public class StreamAudio extends Service {
             conn.setFixedLengthStreamingMode(jsonRequest.toString().getBytes().length);
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
-            conn.setConnectTimeout(3000); //set timeout to 5 seconds
+            conn.setConnectTimeout(2000); //set timeout to 2 seconds
 
             out = new DataOutputStream(conn.getOutputStream());
             out.writeBytes(jsonRequest.toString());
@@ -165,13 +171,18 @@ public class StreamAudio extends Service {
             else {
                 in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             }
-
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
                 response.append(inputLine);
             }
             in.close();
             jsonResponse = new JSONObject(response.toString());
+        }
+        catch (SocketTimeoutException e) {
+            Log.d("[INITSTREAM]", "SOCKET TIMED OUT!");
+            jsonResponse = new JSONObject();
+            jsonResponse.put("timeOut", true);
+            throw e;
         }
         finally {
             Log.d("[initStream]", "initStream: ending connect...");
@@ -195,6 +206,7 @@ public class StreamAudio extends Service {
             conn.setRequestProperty("Auth-Key", idToken);
             conn.setDoOutput(true);
             conn.setChunkedStreamingMode(0);
+            conn.setConnectTimeout(5000); // time out 5 sec
 
             out = new BufferedOutputStream(conn.getOutputStream());
             rec.startRecording(recording_out, out); // <--- need to pass this in
@@ -211,6 +223,10 @@ public class StreamAudio extends Service {
             String resp = new String(b);
         }
         // return error to user about unable to connect?
+        catch (java.net.SocketTimeoutException e) {
+            jsonResponse = new JSONObject();
+            jsonResponse.put("timeOut", true);
+        }
         catch (IOException e) {
             e.printStackTrace();
             rec.startRecording(recording_out, null); //continue recording without stream

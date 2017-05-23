@@ -291,6 +291,14 @@ public class MainActivity extends AppCompatActivity implements
         }
     };
 
+    public void toastErrorMessage(Exception e) {
+        Context context = getApplicationContext();
+        CharSequence error_txt = e.getMessage();
+        int duration_error = Toast.LENGTH_LONG;
+        Toast toast = Toast.makeText(context, error_txt, duration_error);
+        toast.show();
+    }
+
     public void broadCast(View view) {
        //if(!permissionToRecordAccepted || !permissionForLocationAccepted) return;
 
@@ -322,19 +330,9 @@ public class MainActivity extends AppCompatActivity implements
                 try {
                     mService.init_stream(streamIntent);
                     Log.d(TAG, "INIT STREAM STARTED!!");
-                } catch (JSONException e) { // json
-                    e.printStackTrace();
-                } catch (MalformedURLException e) { //url
-                    e.printStackTrace();
-                } catch (InterruptedException e) { //join
-                    e.printStackTrace();
-                } catch (StreamException e) { // error response
-                    Log.d(TAG, e.getMessage());
+                } catch (StreamException|MalformedURLException|InterruptedException|JSONException e) { // error response
                     isRecording = false;
-                    CharSequence error_txt = "Hit Record";
-                    int duration_error = Toast.LENGTH_LONG;
-                    Toast toast = Toast.makeText(context, error_txt, duration_error);
-                    toast.show();
+                    toastErrorMessage(e);
                     r_button.setText("Record");
                     progress.hide();
                     return;
