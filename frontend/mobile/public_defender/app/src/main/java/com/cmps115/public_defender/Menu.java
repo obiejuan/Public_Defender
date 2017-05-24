@@ -20,11 +20,6 @@ public class Menu extends AppCompatActivity {
         finish();
     }
 
-    public void gotoSettings(View view){
-        Intent intent = new Intent(this, Settings.class);
-        Log.d("Settings", "Settings");
-        startActivity(intent);
-    }
 
     public void gotoMyRecordings(View view){
         Intent intent = new Intent(this, FileBrowser.class);

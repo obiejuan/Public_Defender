@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements
     private static final String DEV_REAL_PHONE = "10.0.1.8"; // your local LAN IP (this is bryan's for example ;)
     private static final String PRODUCTION_SERVER = "138.68.200.193";
 
-    private final String externalServerIP = DEV_EMULATOR;
+    private final String externalServerIP = DEV_REAL_PHONE;
     private final String externalServerPort = "3000";
     boolean mBound = false;
     StreamAudio mService = null;
@@ -140,6 +140,11 @@ public class MainActivity extends AppCompatActivity implements
 
             String lat = Double.toString(latitude);
             Log.d("GPS? lat", lat);
+        } else {
+            // can't get location
+            // GPS or Network is not enabled
+            // Ask user to enable GPS/network in settings
+            gps.showSettingsAlert();
         }
 
     }
