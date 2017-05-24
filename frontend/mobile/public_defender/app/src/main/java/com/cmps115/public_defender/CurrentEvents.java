@@ -30,6 +30,8 @@ public class CurrentEvents extends AppCompatActivity {
     GoogleApiClient googleApiClient;
     GoogleSignInAccount acct;
     GeoHandler geoHandler;
+    // GPSTracker class
+    GPSTracker gps;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,11 +102,14 @@ public class CurrentEvents extends AppCompatActivity {
 
     private void findCurrentEventsOnServer()
     {
-        geoHandler = new GeoHandler(this);
+//        geoHandler = new GeoHandler(this);
         double[] geo = {0.0, 0.0};
-        if(geoHandler.hasLocationOn())
-            geo = geoHandler.getGeolocation();
+//        if(geoHandler.hasLocationOn())
+//            geo = geoHandler.getGeolocation();
+        gps = new GPSTracker(this);
         SharedData.setKey("location", geo);
+        geo[0] = gps.getLatitude();
+        geo[1   ] = gps.getLongitude();
         String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
         Log.d("[GEO_DATA]", geo_data);
 
@@ -149,7 +154,8 @@ public class CurrentEvents extends AppCompatActivity {
             JSONObject input = input_json[number_req-1]; //only process the last (most recent) request
             URL url = null;
             try {
-                url = new URL("http://192.168.1.118:3000/nearby/");
+                url = new URL("http://10.0.2.2:3000/nearby/");
+//                url = new URL("http://192.168.1.118:3000/nearby/");
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }

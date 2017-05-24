@@ -36,6 +36,7 @@ import com.google.android.gms.common.api.Status;
 import org.json.JSONException;
 
 import java.net.MalformedURLException;
+import android.test.mock.MockPackageManager;
 
 /*
 Please note that if you want to change the draw/drop theme for this activity you need to ensure you're setting the contraints.
@@ -69,15 +70,22 @@ public class MainActivity extends AppCompatActivity implements
 
     // Set this = your local ip
     private static final String DEV_EMULATOR = "10.0.2.2";
-    private static final String DEV_REAL_PHONE = "192.168.1.118"; // your local LAN IP (this is bryan's for example ;)
+    private static final String DEV_REAL_PHONE = "10.0.1.8"; // your local LAN IP (this is bryan's for example ;)
     private static final String PRODUCTION_SERVER = "138.68.200.193";
 
-    private final String externalServerIP = DEV_REAL_PHONE;
+    private final String externalServerIP = DEV_EMULATOR;
     private final String externalServerPort = "3000";
     boolean mBound = false;
     StreamAudio mService = null;
 
     ProgressDialog progress;
+
+    private static final int REQUEST_CODE_PERMISSION = 2;
+    String mPermission = Manifest.permission.ACCESS_FINE_LOCATION;
+
+    // GPSTracker class
+    GPSTracker gps;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,6 +114,33 @@ public class MainActivity extends AppCompatActivity implements
 
         SignInButton signInButton = (SignInButton) findViewById(R.id.sign_in_button);
         signInButton.setSize(SignInButton.SIZE_STANDARD);
+
+        try {
+            if (ActivityCompat.checkSelfPermission(this, mPermission)
+                    != MockPackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(this, new String[]{mPermission},
+                        REQUEST_CODE_PERMISSION);
+
+                // If any permission above not allowed by user, this condition will
+                //execute every time, else your else part will work
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // create class object
+        gps = new GPSTracker(MainActivity.this);
+
+        // check if GPS enabled
+        if (gps.canGetLocation()) {
+
+            double latitude = gps.getLatitude();
+            double longitude = gps.getLongitude();
+
+            String lat = Double.toString(latitude);
+            Log.d("GPS? lat", lat);
+        }
 
     }
 
@@ -299,11 +334,14 @@ public class MainActivity extends AppCompatActivity implements
             Context context = getApplicationContext();
 
             double[] geo = {0.0, 0.0};
-            if(geoHandler.hasLocationOn())
-                geo = geoHandler.getGeolocation();
+//            if(geoHandler.hasLocationOn())
+//                geo = geoHandler.getGeolocation();
+//
+//            if(!(geo[0] == 0.0 && geo[1] == 0.0))
+//                Log.d("[GEO]", (geo[0] + ", " + geo[1]));
+            geo[0] = gps.getLatitude();
+            geo[1] = gps.getLongitude();
 
-            if(!(geo[0] == 0.0 && geo[1] == 0.0))
-                Log.d("[GEO]", (geo[0] + ", " + geo[1]));
 
             String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
             if (!isRecording) {
