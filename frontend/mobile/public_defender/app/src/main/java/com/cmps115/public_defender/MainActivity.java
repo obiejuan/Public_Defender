@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements
     private static final String DEV_REAL_PHONE = "10.0.1.8"; // your local LAN IP (this is bryan's for example ;)
     private static final String PRODUCTION_SERVER = "138.68.200.193";
 
-    private final String externalServerIP = DEV_REAL_PHONE;
+    private final String externalServerIP = PRODUCTION_SERVER;
     private final String externalServerPort = "3000";
     boolean mBound = false;
     StreamAudio mService = null;
@@ -344,9 +344,13 @@ public class MainActivity extends AppCompatActivity implements
 //
 //            if(!(geo[0] == 0.0 && geo[1] == 0.0))
 //                Log.d("[GEO]", (geo[0] + ", " + geo[1]));
-            geo[0] = gps.getLatitude();
-            geo[1] = gps.getLongitude();
+            if(gps.canGetLocation) {
+                geo[0] = gps.getLatitude();
+                geo[1] = gps.getLongitude();
+            } else {
+                gps.showSettingsAlert();
 
+            }
 
             String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
             if (!isRecording) {
