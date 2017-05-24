@@ -111,5 +111,15 @@
     <string name="signed_in_fmt">Signed in as: %s</string>
     <string name="loading">Loading…</string>
 
+    <!-- How-To / FAQ strings -->
+    <string name="howtofaq">How-To/FAQ</string>
+    <string name="howto_title">How to Use Public Defender:</string>
+    <string name="howto_desc">To use Public Defender, simply press the red Record button!
+     You are free to lock your phone and place it in your pocket as the app will continue
+    to record until you explicitly stop it.  Recordings are streamed to our server, so even if your
+    phone gets \"lost\" during the recording - you\'ll still have a retrievable copy.</string>
+    <string name="faq_title">FAQ.</string>
+    <string name="faq_desc">foo</string>
+
 
 </resources>
