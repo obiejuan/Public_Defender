@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "232250430081",
+    "project_id": "pdefender-166322"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:232250430081:android:bb0b0310d471b151",
+        "android_client_info": {
+          "package_name": "com.cmps115.public_defender"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "232250430081-uqqfd7uhtrgpli7ujh76vvet0k3i4o90.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cmps115.public_defender",
+            "certificate_hash": "da114c58938eed108c490ad642207d3cf36206ec"
+          }
+        },
+        {
+          "client_id": "232250430081-g10nohsivb1mgbvdb718628ioicqs2em.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAxOC1HoV6zQDwnTdisbWTX0SmkvFVv1aU"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
