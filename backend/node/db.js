@@ -1,10 +1,15 @@
+//
+// Desctiption of class and usage
+//
+//
+
+// Imports and initializations.
 var promise = require('bluebird');
 var pgp = require('pg-promise')({
 	promiseLib: promise
 });
-/**
- * Setup server values
- */
+
+// PostgreSQL server values
 var cn = {
 	host: 'localhost',
 	port: 5432,
@@ -13,6 +18,7 @@ var cn = {
 	password: 'password'
 };
 
+// Database object
 var db = pgp(cn);
 
 module.exports = {

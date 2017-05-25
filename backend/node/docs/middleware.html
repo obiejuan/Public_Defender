@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>middleware.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>middleware.js</h1>
+        
+
+        
+          <div>
+            <h3>Table of Contents</h3>
+            <ol>
+              
+                
+                <li>
+                  <a class="source" href="app.html">
+                    app.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="db.html">
+                    db.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="middleware.html">
+                    middleware.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="routes.html">
+                    routes.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="sql.html">
+                    sql.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="views.html">
+                    views.js
+                  </a>
+                </li>
+              
+            </ol>
+            <h3>Table Descriptions: </h3> 
+    <ol>
+        <li>
+            <a class= "source" href="pd_user.html">
+            User table
+        </a>
+        </li>
+        <li>
+            <a class= "source" href="pd_event.html">
+            Event table
+        </a>
+        </li>
+        <li>
+            <a class= "source" href="pd_recording.html">
+            Recording table
+        </a>
+        </li>
+        
+    </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        
+        
+          <div class='highlight'><pre><span class="hljs-keyword">var</span> db = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./db.js'</span>).connection;
+<span class="hljs-keyword">var</span> sql = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./sql.js'</span>);
+<span class="hljs-keyword">var</span> users = sql.users;
+
+<span class="hljs-comment">/**
+ * Google backend client verification
+ */</span>
+<span class="hljs-keyword">var</span> CLIENT_ID = <span class="hljs-string">"232250430081-g10nohsivb1mgbvdb718628ioicqs2em.apps.googleusercontent.com"</span>;
+<span class="hljs-keyword">var</span> GoogleAuth = <span class="hljs-built_in">require</span>(<span class="hljs-string">'google-auth-library'</span>);
+<span class="hljs-keyword">var</span> auth = <span class="hljs-keyword">new</span> GoogleAuth;
+
+<span class="hljs-keyword">var</span> check_login = <span class="hljs-function">(<span class="hljs-params">req, res, next</span>) =&gt;</span> {
+	user_id_token = req.headers[<span class="hljs-string">'auth-key'</span>];
+	<span class="hljs-keyword">if</span> (user_id_token) { <span class="hljs-comment">//if they have token in headers</span>
+		<span class="hljs-keyword">var</span> client = <span class="hljs-keyword">new</span> auth.OAuth2(CLIENT_ID, <span class="hljs-string">''</span>, <span class="hljs-string">''</span>);
+		client.verifyIdToken(user_id_token, CLIENT_ID, (e, login) =&gt; {
+			<span class="hljs-keyword">if</span> (e) { <span class="hljs-comment">// was there an error?</span>
+				<span class="hljs-built_in">console</span>.log(e);
+				res.status(<span class="hljs-number">403</span>)
+				.json({
+					<span class="hljs-attr">status</span>: <span class="hljs-string">'Forbidden'</span>,
+					<span class="hljs-attr">msg</span>: <span class="hljs-string">'Invalid access token provided.'</span>,
+					<span class="hljs-attr">error</span>: e.toString()
+				});
+				<span class="hljs-keyword">return</span>;
+			}
+			<span class="hljs-keyword">else</span> { <span class="hljs-comment">// no error, check user id </span>
+				<span class="hljs-keyword">var</span> payload = login.getPayload();
+				<span class="hljs-keyword">var</span> q_usr_create = {
+					<span class="hljs-attr">g_email</span>: payload[<span class="hljs-string">'email'</span>],
+					<span class="hljs-attr">google_id</span>: payload[<span class="hljs-string">'sub'</span>],
+					<span class="hljs-attr">f_name</span>: payload[<span class="hljs-string">'given_name'</span>],
+					<span class="hljs-attr">l_name</span>: payload[<span class="hljs-string">'family_name'</span>]
+				}
+			   <span class="hljs-comment">/************************************************************
+				*	Check if user even exists in the database. If there isn't
+				*	any elements returned (no user exists) then we will create
+				*	one using the same exact information.
+				*	
+				* 		SQL: 'select_user' --&gt; check_usr_exists.sql
+				*		Var: q_usr_create
+				***********************************************************/</span>
+				db.any(users.get_by_google_id, q_usr_create)
+                .then( <span class="hljs-function">(<span class="hljs-params">response_db</span>) =&gt;</span> {
+                    <span class="hljs-built_in">console</span>.log(response_db.length.valueOf())
+                    <span class="hljs-keyword">if</span> ( response_db.length.valueOf() &lt; <span class="hljs-number">1</span> ) {</pre></div>
+        
+      
+        
+        <p>create the user</p>
+
+        
+          <div class='highlight'><pre>                        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">"Creating user..."</span>);
+                        <span class="hljs-built_in">console</span>.log(q_usr_create);
+                        db.one(users.create , q_usr_create, c =&gt; c)
+                            .then( <span class="hljs-function">(<span class="hljs-params">c</span>) =&gt;</span> {
+                                <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`New user: <span class="hljs-subst">${c}</span>.`</span>);
+                                next();
+                            }).catch( <span class="hljs-function">(<span class="hljs-params">err</span>) =&gt;</span> {
+                                <span class="hljs-built_in">console</span>.error(err);
+                                next(err);
+                            });
+                    }
+                    <span class="hljs-keyword">else</span> { 
+                        <span class="hljs-built_in">console</span>.log(response_db[<span class="hljs-number">0</span>]) 
+                        next();
+                    } <span class="hljs-comment">//else</span>
+                }); <span class="hljs-comment">// 1st then</span>
+			} <span class="hljs-comment">// else</span>
+		});
+	}
+	<span class="hljs-keyword">else</span> {
+		res.status(<span class="hljs-number">403</span>)
+				.json({
+					<span class="hljs-attr">status</span>: <span class="hljs-string">'Forbidden'</span>,
+					<span class="hljs-attr">msg</span>: <span class="hljs-string">'No access token provided.'</span>
+				});
+		<span class="hljs-keyword">return</span>;
+	}
+}
+
+<span class="hljs-comment">/* Payton's middleware logging function */</span>
+<span class="hljs-keyword">var</span> do_log = <span class="hljs-function">(<span class="hljs-params">req, res, next</span>) =&gt;</span> {
+	<span class="hljs-keyword">var</span> ip_regex = <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(<span class="hljs-string">'((?:[0-9]{1,3}\.?){4})'</span>);
+	<span class="hljs-keyword">var</span> r_method = req.method;
+	<span class="hljs-keyword">var</span> r_path = req.path;
+	<span class="hljs-keyword">var</span> r_ipaddr  = req.ip.match(ip_regex)[<span class="hljs-number">0</span>];
+	<span class="hljs-keyword">var</span> date = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>();
+	<span class="hljs-keyword">var</span> curr_date = date.toLocaleString();
+
+	<span class="hljs-comment">/*
+	 * Log valuable data about the incident 
+	 *   Post or Get request
+	 *   Eventually username
+	 * Write a console logging (middleware) function.
+	 * 
+	 */</span>
+	<span class="hljs-built_in">console</span>.log(<span class="hljs-string">`(<span class="hljs-subst">${curr_date}</span>) from [<span class="hljs-subst">${r_ipaddr}</span>]: [<span class="hljs-subst">${r_method}</span>] --&gt; <span class="hljs-subst">${r_path}</span>`</span>);
+	next();
+}
+
+<span class="hljs-built_in">module</span>.exports = { 
+                    <span class="hljs-attr">logging</span>: do_log,
+                    <span class="hljs-attr">login</span>: check_login
+                 }</pre></div>
+        
+      
+        
+        <p>check_login;</p>
+
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

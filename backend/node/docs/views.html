@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>views.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>views.js</h1>
+        
+
+        
+          <div>
+            <h3>Table of Contents</h3>
+            <ol>
+              
+                
+                <li>
+                  <a class="source" href="app.html">
+                    app.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="db.html">
+                    db.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="middleware.html">
+                    middleware.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="routes.html">
+                    routes.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="sql.html">
+                    sql.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="views.html">
+                    views.js
+                  </a>
+                </li>
+              
+            </ol>
+            <h3>Table Descriptions: </h3> 
+    <ol>
+        <li>
+            <a class= "source" href="pd_user.html">
+            User table
+        </a>
+        </li>
+        <li>
+            <a class= "source" href="pd_event.html">
+            Event table
+        </a>
+        </li>
+        <li>
+            <a class= "source" href="pd_recording.html">
+            Recording table
+        </a>
+        </li>
+        
+    </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        <p>requirements and imports</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">var</span> db = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./db.js'</span>).connection;
+<span class="hljs-keyword">var</span> q = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./sql.js'</span>);
+<span class="hljs-keyword">var</span> users = q.users;
+<span class="hljs-keyword">var</span> events = q.events;
+<span class="hljs-keyword">var</span> recordings = q.recordings;
+<span class="hljs-keyword">const</span> fs = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fs'</span>);
+<span class="hljs-keyword">var</span> stream = <span class="hljs-built_in">require</span>(<span class="hljs-string">'stream'</span>);</pre></div>
+        
+      
+        
+        <p>Generate a unique id (for filenames)</p>
+<p>Used later.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">const</span> uuid = <span class="hljs-built_in">require</span>(<span class="hljs-string">'uuid/v4'</span>);</pre></div>
+        
+      
+        
+        <p>Just returns all events, with associated user and recordings.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">query_all</span> (<span class="hljs-params">req, res, next</span>) </span>{ 
+	db.any(sql.get_all)
+    .then( <span class="hljs-function">(<span class="hljs-params">data</span>) =&gt;</span> {
+        res.status(<span class="hljs-number">200</span>)
+            .json({
+                <span class="hljs-attr">status</span>: <span class="hljs-string">'success'</span>,
+                <span class="hljs-attr">data</span>: data,
+                <span class="hljs-attr">message</span>: <span class="hljs-string">'All events included.'</span>
+            });
+    })
+    .catch( <span class="hljs-function">(<span class="hljs-params">err</span>) =&gt;</span> { 
+        <span class="hljs-keyword">return</span> next(err);
+    });
+}</pre></div>
+        
+      
+        
+        <p>  Get’s the nearby active=true events for the parameters in request.</p>
+<p>  Files: </p>
+<pre><code>  get_nearby.sql
+</code></pre><p>  JSON keys: </p>
+<pre><code>  @param {string} current_location
+  @param {int} distance
+</code></pre>
+        
+          <div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">nearby</span>(<span class="hljs-params">req, res, next</span>) </span>{
+	<span class="hljs-keyword">var</span> date_now = <span class="hljs-built_in">Date</span>.now();
+	<span class="hljs-keyword">var</span> query = {
+		<span class="hljs-attr">current_location</span>: req.body.current_location,
+		<span class="hljs-attr">distance</span>: req.body.distance
+	};
+
+	db.any(events.get_nearby, query)
+		.then( <span class="hljs-function">(<span class="hljs-params">data</span>) =&gt;</span> {
+			<span class="hljs-built_in">console</span>.log(data.length);
+			res.status(<span class="hljs-number">200</span>)
+				.json({
+					<span class="hljs-attr">status</span>: <span class="hljs-string">'success'</span>,
+					<span class="hljs-attr">data</span>: data,
+				});
+		})
+		.catch( <span class="hljs-function">(<span class="hljs-params">err</span>) =&gt;</span> {
+			<span class="hljs-built_in">console</span>.log(err);
+		}).then( <span class="hljs-function">(<span class="hljs-params">err</span>) =&gt;</span> { <span class="hljs-comment">// error resonses</span>
+			res.status(<span class="hljs-number">500</span>)
+				.json({
+					<span class="hljs-attr">status</span>: <span class="hljs-string">'error'</span>,
+					<span class="hljs-attr">msg</span>: err,
+				})
+		}).catch( <span class="hljs-function">(<span class="hljs-params">err</span>) =&gt;</span> {});
+}</pre></div>
+        
+      
+        
+        <p>Lists all Users</p>
+<p>Table “public.pd_user”</p>
+<pre><code>       Name:        |     Datatype:                     |  other..
+    ----------------+-----------------------------------+-----------------
+    user_id         |     integer                       |  primary key
+    auth_key        |     character varying(<span class="hljs-number">255</span>)        |
+    email           |     character varying(<span class="hljs-number">255</span>)        |
+    google_id       |     character varying(<span class="hljs-number">255</span>)        |
+    google_firstname|     character varying(<span class="hljs-number">255</span>)        |
+    google_lastname |     character varying(<span class="hljs-number">255</span>)        |
+    date_created    |     timestamp <span class="hljs-keyword">with</span> time zone      |  auto-filled
+</code></pre><p>All users:</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">get_users</span>(<span class="hljs-params">req, res, next</span>) </span>{
+	db.any(<span class="hljs-string">'SELECT * FROM pd_user'</span>).then( <span class="hljs-function">(<span class="hljs-params">data</span>) =&gt;</span> {
+		<span class="hljs-built_in">console</span>.log(data);
+			res.status(<span class="hljs-number">200</span>)
+				.json({
+					<span class="hljs-attr">status</span>: <span class="hljs-string">'success'</span>,
+					<span class="hljs-attr">data</span>: data
+				});
+		}).catch( <span class="hljs-function">(<span class="hljs-params">err</span>) =&gt;</span> {
+			<span class="hljs-built_in">console</span>.error(err)
+			res.status(<span class="hljs-number">500</span>)
+				.json({
+					<span class="hljs-attr">status</span>: <span class="hljs-string">'error'</span>,
+					<span class="hljs-attr">msg</span>: err,
+			}).catch( <span class="hljs-function">(<span class="hljs-params">err</span>) =&gt;</span> {
+				 <span class="hljs-built_in">console</span>.error(err)
+			})
+		}); 
+};</pre></div>
+        
+      
+        
+        <p>Get a specific user’s data: </p>
+<pre><code>    @param {int} userid
+</code></pre>
+        
+          <div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">get_user</span>(<span class="hljs-params">req, res, next</span>)</span>{
+	id = req.params.userid;
+	db.any(users.get, {<span class="hljs-attr">user_id</span>: id}).then( <span class="hljs-function">(<span class="hljs-params">data</span>) =&gt;</span> {
+			<span class="hljs-built_in">console</span>.log(data);
+			res.status(<span class="hljs-number">200</span>)
+				.json({
+					<span class="hljs-attr">status</span>: <span class="hljs-string">'success'</span>,
+					<span class="hljs-attr">data</span>: data
+				});
+	}).catch( <span class="hljs-function">(<span class="hljs-params">err</span>) =&gt;</span> {
+		<span class="hljs-built_in">console</span>.error(err)
+		res.status(<span class="hljs-number">500</span>)
+			.json({
+				<span class="hljs-attr">status</span>: <span class="hljs-string">'error'</span>,
+				<span class="hljs-attr">msg</span>: err,
+		}).catch( <span class="hljs-function">(<span class="hljs-params">err</span>) =&gt;</span> {
+			<span class="hljs-built_in">console</span>.error(err)
+		})
+	}); 
+};</pre></div>
+        
+      
+        
+        <p>Get all events and recordings associated with a user</p>
+<pre><code>@param {int} userid -- used <span class="hljs-keyword">for</span> looking up user
+</code></pre><p>Not currently in use.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">get_user_events</span>(<span class="hljs-params">req, res, next</span>) </span>{
+	id = req.params.userid;
+	db.any(users.get_events, {<span class="hljs-attr">user_id</span>: id}).then( <span class="hljs-function">(<span class="hljs-params">data</span>) =&gt;</span> {
+			<span class="hljs-built_in">console</span>.log(data);
+			res.status(<span class="hljs-number">200</span>)
+				.json({
+					<span class="hljs-attr">status</span>: <span class="hljs-string">'success'</span>,
+					<span class="hljs-attr">data</span>: data
+				});
+	}).catch( <span class="hljs-function">(<span class="hljs-params">err</span>) =&gt;</span> {
+		<span class="hljs-built_in">console</span>.error(err)
+		res.status(<span class="hljs-number">500</span>)
+			.json({
+				<span class="hljs-attr">status</span>: <span class="hljs-string">'error'</span>,
+				<span class="hljs-attr">msg</span>: err,
+		}).catch( <span class="hljs-function">(<span class="hljs-params">err</span>) =&gt;</span> {
+			<span class="hljs-built_in">console</span>.error(err)
+		})
+	});
+};</pre></div>
+        
+      
+        
+        <p> Table “public.pd_event”</p>
+<pre><code>    Column   |            Type             |      Modifiers                         
+ ------------+-----------------------------+-------------------------
+  event_id   | integer                     | primary key counts up
+  location   | point                       | 
+  pd_user_id | integer                     | 
+  active     | boolean                     | 
+  event_date | timestamp without time zone |  
+</code></pre><p>  Files:</p>
+<pre><code>   @file init_upload.sql
+   @file new_recording.sql
+</code></pre><p>  JSON keys: </p>
+<pre><code>  @param {int} user
+  @param {string} location  
+</code></pre><p>  Expressjs:</p>
+<pre><code>  @param {any} req 
+  @param {any} res 
+  @param {any} next 
+</code></pre><p>This initiates the recording/streaming process by creating table entries and various other bookkeeping tasks.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">upload</span> (<span class="hljs-params">req, res, next</span>) </span>{
+    <span class="hljs-built_in">console</span>.log(req.body);
+	<span class="hljs-keyword">var</span> { current_location, user } = req.body
+	<span class="hljs-keyword">var</span> event
+	date = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>()
+	<span class="hljs-keyword">var</span> unique_token
+	db.tx( <span class="hljs-function">(<span class="hljs-params">t</span>) =&gt;</span> {</pre></div>
+        
+      
+        
+        <p>google_id –&gt; pd_user_id</p>
+
+        
+          <div class='highlight'><pre>		<span class="hljs-keyword">return</span> t.one(users.get_by_google_id, {<span class="hljs-attr">google_id</span>: user}, u =&gt; +u.user_id) 
+        .then( <span class="hljs-function">(<span class="hljs-params">u_id</span>) =&gt;</span> {
+            <span class="hljs-built_in">console</span>.log(u_id);
+            unique_token = u_id + <span class="hljs-string">'_'</span> + uuid()
+            record_data = {
+                <span class="hljs-attr">user_id</span>: u_id,
+                <span class="hljs-attr">geo</span>: current_location,
+                <span class="hljs-attr">active</span>: <span class="hljs-literal">true</span>,
+                <span class="hljs-attr">timestamp</span>: date
+            };
+            <span class="hljs-built_in">console</span>.log(record_data);</pre></div>
+        
+      
+        
+        <p>create event –&gt; event_id</p>
+
+        
+          <div class='highlight'><pre>            <span class="hljs-keyword">return</span> t.one(events.start_event, record_data, event =&gt; +event.event_id) 
+        }).then( <span class="hljs-function">(<span class="hljs-params">event_id</span>) =&gt;</span> {
+            <span class="hljs-built_in">console</span>.log(<span class="hljs-string">"Event ID: "</span> + event_id);
+            event = event_id;
+            recording_data = {
+                <span class="hljs-attr">event_id</span>: event_id,
+                <span class="hljs-attr">filename</span>: unique_token
+            };
+            <span class="hljs-keyword">return</span> t.none(recordings.create, recording_data);
+		}).then( <span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+			<span class="hljs-built_in">console</span>.log(event, unique_token);
+			res.status(<span class="hljs-number">200</span>)
+				.json({
+					<span class="hljs-attr">status</span>: <span class="hljs-string">'success'</span>,</pre></div>
+        
+      
+        
+        <p>token all by itself</p>
+
+        
+          <div class='highlight'><pre>					upload_token: unique_token,</pre></div>
+        
+      
+        
+        <p>unique upload url</p>
+
+        
+          <div class='highlight'><pre>					url: <span class="hljs-string">`<span class="hljs-subst">${event}</span>/<span class="hljs-subst">${unique_token}</span>/`</span> 
+				});
+		})
+    })
+    .catch( <span class="hljs-function">(<span class="hljs-params">err</span>) =&gt;</span> {
+        <span class="hljs-built_in">console</span>.log(err.message);
+        res.status(<span class="hljs-number">500</span>)
+            .json({
+                <span class="hljs-attr">status</span>: <span class="hljs-string">'error'</span>,</pre></div>
+        
+      
+        
+        <p>if there is a more specific ‘message’ structure use that</p>
+
+        
+          <div class='highlight'><pre>                msg: err.message ? err.message : err, 
+                <span class="hljs-attr">upload_token</span>: <span class="hljs-literal">null</span>,
+                <span class="hljs-attr">url</span>: <span class="hljs-literal">null</span>,
+            });
+    });
+}</pre></div>
+        
+      
+        
+        <p>  Table “public.pd_recording”</p>
+<pre><code>    Column    |         Type           | Modifiers 
+    ----------+------------------------+-----------
+    event_id  | integer                | not <span class="hljs-literal">null</span>
+    filename  | character varying(<span class="hljs-number">255</span>) | not <span class="hljs-literal">null</span>
+</code></pre><p> JSON:</p>
+<pre><code>@param {int} id -- filename
+@param {int} event -- event_id  
+</code></pre><p>Expressjs:</p>
+<pre><code>@param {any} req 
+@param {any} res 
+@param {any} next 
+</code></pre><p>Recieves the streaming data from client through a POST request.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">recieve_stream</span> (<span class="hljs-params">req, res, next</span>) </span>{
+	file_id = req.params.id
+	event = req.params.event
+	<span class="hljs-built_in">console</span>.log(<span class="hljs-string">"Beginning transfer for unique key: "</span> + file_id)
+	fileStream = fs.createWriteStream(<span class="hljs-string">"./data_files/"</span> + file_id + <span class="hljs-string">".pcm"</span>)
+	req.pipe(fileStream);
+    
+    live_streams[event] = <span class="hljs-keyword">new</span> stream.Readable().on(<span class="hljs-string">'stream_requested'</span>, (res) =&gt; { <span class="hljs-comment">// setup stream event in case someone wants to listen live.</span>
+        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">"Stream requested."</span>);
+        req.pipe(res);
+    });
+
+    <span class="hljs-keyword">var</span> tick = <span class="hljs-number">0</span>
+	<span class="hljs-keyword">var</span> total_bytes = <span class="hljs-number">0</span>;
+	<span class="hljs-keyword">var</span> errorMsg = <span class="hljs-literal">null</span>
+	<span class="hljs-keyword">var</span> stop_data = {
+		<span class="hljs-attr">active</span>: <span class="hljs-literal">false</span>,
+		<span class="hljs-attr">event_id</span>: event
+	};</pre></div>
+        
+      
+        
+        <p>Called any time data is recieved from the request. Logs how much is transferred
+and also keeps track of the number of chunks. </p>
+<pre><code>    @param {bytes[]} chunk
+</code></pre><p>This merely keeps track of some data, the transfer happens automatically due to the 
+pipe above.</p>
+
+        
+          <div class='highlight'><pre>	req.on(<span class="hljs-string">'data'</span>, (chunk) =&gt; {
+		<span class="hljs-built_in">console</span>.log(tick + <span class="hljs-string">": "</span> + (chunk.length / <span class="hljs-number">1024</span>).toFixed(<span class="hljs-number">2</span>) + <span class="hljs-string">" KiB"</span>)
+		total_bytes = total_bytes + chunk.length
+		tick++;   
+	})
+	req.on(<span class="hljs-string">'end'</span>,  ( ) =&gt; { <span class="hljs-comment">// Called when the connection / request is ended. </span>
+        <span class="hljs-built_in">console</span>.log(event)
+        <span class="hljs-built_in">console</span>.log(stop_data)
+		db.none(events.stop_event, stop_data)
+			.then( <span class="hljs-function"><span class="hljs-params">( )</span> =&gt;</span> {
+				<span class="hljs-built_in">console</span>.log(<span class="hljs-string">"Successful pd_event table update."</span>);
+			})
+			.catch(<span class="hljs-function">(<span class="hljs-params">err</span>) =&gt;</span> {
+				<span class="hljs-built_in">console</span>.log(<span class="hljs-string">"Error updating pd_event table."</span>);
+				<span class="hljs-built_in">console</span>.log(err);
+			});
+        live_streams[event] = <span class="hljs-literal">null</span>;
+		<span class="hljs-built_in">console</span>.log(<span class="hljs-string">"End: "</span> + (total_bytes / <span class="hljs-number">1024</span>).toFixed(<span class="hljs-number">2</span>) + <span class="hljs-string">" KiB transfered."</span>)
+		<span class="hljs-built_in">console</span>.log(<span class="hljs-string">""</span>) <span class="hljs-comment">// Newline for prettier output on console</span>
+	});
+	req.on(<span class="hljs-string">'error'</span>, (err) =&gt; {
+        live_streams[event] = <span class="hljs-literal">null</span>;
+		errorMsg = err
+		<span class="hljs-built_in">console</span>.log(<span class="hljs-string">"Error: "</span> + err)
+	});
+	res.send({ <span class="hljs-comment">// Send response to client. </span>
+		<span class="hljs-string">"UploadCompleted"</span>: <span class="hljs-literal">true</span>,
+		<span class="hljs-string">"Error"</span>: errorMsg,
+	});
+}
+
+<span class="hljs-keyword">var</span> live_streams = {};
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">listen_stream</span> (<span class="hljs-params">req, res</span>) </span>{ <span class="hljs-comment">// Stream live events</span>
+	id = req.params.eventid;
+    <span class="hljs-keyword">if</span> (live_streams[id] != <span class="hljs-literal">null</span> ) {
+        <span class="hljs-built_in">console</span>.log(live_streams[id]);
+        live_streams[id].emit(<span class="hljs-string">'stream_requested'</span>, res);
+    }
+    <span class="hljs-keyword">else</span> {
+        res.sendStatus(<span class="hljs-number">404</span>);
+    }
+};</pre></div>
+        
+      
+        
+        <p>Export views for use elsewhere.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-built_in">module</span>.exports = {
+    <span class="hljs-attr">query_all</span>: query_all,
+    <span class="hljs-attr">nearby</span>: nearby,
+    <span class="hljs-attr">stream</span>: listen_stream,
+    <span class="hljs-attr">users</span>: {
+        <span class="hljs-attr">get_all</span>: get_users,
+        <span class="hljs-attr">get_events</span>: get_user_events,
+        <span class="hljs-attr">get</span>: get_user
+    },
+    <span class="hljs-attr">events</span>: {
+        <span class="hljs-attr">begin_upload</span>: upload,
+        <span class="hljs-attr">get_stream</span>: recieve_stream
+    }
+}</pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

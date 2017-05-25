@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>db.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>db.js</h1>
+        
+
+        
+          <div>
+            <h3>Table of Contents</h3>
+            <ol>
+              
+                
+                <li>
+                  <a class="source" href="app.html">
+                    app.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="db.html">
+                    db.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="middleware.html">
+                    middleware.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="routes.html">
+                    routes.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="sql.html">
+                    sql.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="views.html">
+                    views.js
+                  </a>
+                </li>
+              
+            </ol>
+            <h3>Table Descriptions: </h3> 
+    <ol>
+        <li>
+            <a class= "source" href="pd_user.html">
+            User table
+        </a>
+        </li>
+        <li>
+            <a class= "source" href="pd_event.html">
+            Event table
+        </a>
+        </li>
+        <li>
+            <a class= "source" href="pd_recording.html">
+            Recording table
+        </a>
+        </li>
+        
+    </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        <p>Desctiption of class and usage</p>
+
+        
+      
+        
+        <p>Imports and initializations.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">var</span> promise = <span class="hljs-built_in">require</span>(<span class="hljs-string">'bluebird'</span>);
+<span class="hljs-keyword">var</span> pgp = <span class="hljs-built_in">require</span>(<span class="hljs-string">'pg-promise'</span>)({
+	<span class="hljs-attr">promiseLib</span>: promise
+});</pre></div>
+        
+      
+        
+        <p>PostgreSQL server values</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">var</span> cn = {
+	<span class="hljs-attr">host</span>: <span class="hljs-string">'localhost'</span>,
+	<span class="hljs-attr">port</span>: <span class="hljs-number">5432</span>,
+	<span class="hljs-attr">database</span>: <span class="hljs-string">'pdefender'</span>,
+	<span class="hljs-attr">user</span>: <span class="hljs-string">'node'</span>,
+	<span class="hljs-attr">password</span>: <span class="hljs-string">'password'</span>
+};</pre></div>
+        
+      
+        
+        <p>Database object</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-keyword">var</span> db = pgp(cn);
+
+<span class="hljs-built_in">module</span>.exports = {
+    <span class="hljs-attr">connection</span>: db
+}</pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

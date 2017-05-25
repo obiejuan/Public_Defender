@@ -1,20 +1,18 @@
+// requirements and imports
 var db = require('./db.js').connection;
 var q = require('./sql.js');
 var users = q.users;
 var events = q.events;
 var recordings = q.recordings;
-
 const fs = require('fs');
 var stream = require('stream');
 
-/**
- * generate a unique id (for filenames)
- */
+// Generate a unique id (for filenames)
+//
+// Used later.
 const uuid = require('uuid/v4');
 
-/**
- * Just returns all events, with associated user and recordings
- */
+//Just returns all events, with associated user and recordings.
 function query_all (req, res, next) { 
 	db.any(sql.get_all)
     .then( (data) => {
@@ -30,23 +28,23 @@ function query_all (req, res, next) {
     });
 }
 
-/************************************************************************
- * Get's the nearby active=true events for the parameters in #Request.
- * 
- * Uses: 
- * @file get_nearby.sql
- * 
- * JSON keys: 
- * @param {string} current_location
- * @param {int} distance
- ***********************************************************************/
+// 
+//   Get's the nearby active=true events for the parameters in request.
+//   
+//   Files: 
+//
+//   	get_nearby.sql
+//   JSON keys: 
+//
+//   	@param {string} current_location
+//   	@param {int} distance
+//
 function nearby(req, res, next) {
 	var date_now = Date.now();
 	var query = {
 		current_location: req.body.current_location,
 		distance: req.body.distance
 	};
-	//console.log(query);
 
 	db.any(events.get_nearby, query)
 		.then( (data) => {
@@ -68,18 +66,21 @@ function nearby(req, res, next) {
 		}).catch( (err) => {});
 }
 
-/*********************************************************************************************
- * Lists all
- *  
- * Table "public.pd_user"
- *  Column  |          Type          |                      Modifiers                       
- * ---------+------------------------+------------------------------------------------------
- * user_id  | integer                | not null default nextval('pd_user_id_seq'::regclass)
- * auth_key | character varying(255) | 
- * email    | character varying(255) | 
- * 
- *********************************************************************************************/
 
+// Lists all Users
+//   
+// Table "public.pd_user"
+//
+//			   Name:	    | 	Datatype:		             |  other..
+//	  	  ----------------+-----------------------------------+-----------------
+//			user_id         | 	integer                       |  primary key
+//			auth_key	    | 	character varying(255)        |
+//			email		   | 	character varying(255)        |
+//			google_id	   | 	character varying(255)        |
+//			google_firstname| 	character varying(255)        |
+//			google_lastname |     character varying(255)        |
+//			date_created	|     timestamp with time zone      |  auto-filled
+// All users:
 function get_users(req, res, next) {
 	db.any('SELECT * FROM pd_user').then( (data) => {
 		console.log(data);
@@ -97,12 +98,12 @@ function get_users(req, res, next) {
 			}).catch( (err) => {
 				 console.error(err)
 			})
-		}); //end catch of db.any then 
+		}); 
 };
 
-/**
- * get a specific user's data
- */
+// Get a specific user's data: 
+//
+// 		@param {int} userid
 function get_user(req, res, next){
 	id = req.params.userid;
 	db.any(users.get, {user_id: id}).then( (data) => {
@@ -124,9 +125,12 @@ function get_user(req, res, next){
 	}); 
 };
 
-/**
- * Get all events and recordings associated with a user
- */
+
+// Get all events and recordings associated with a user
+//
+//		@param {int} userid -- used for looking up user
+//
+// Not currently in use.
 function get_user_events(req, res, next) {
 	id = req.params.userid;
 	db.any(users.get_events, {user_id: id}).then( (data) => {
@@ -148,46 +152,40 @@ function get_user_events(req, res, next) {
 	});
 };
 
-
-/******************************************************************************************************
- * 	Table "public.pd_event"
- *	   Column   |            Type             |                       Modifiers                       
- *	------------+-----------------------------+-------------------------------------------------------
- *	 event_id   | integer                     | not null default nextval('pd_event_id_seq'::regclass)
- *	 location   | point                       | 
- *	 pd_user_id | integer                     | not null
- *	 active     | boolean                     | not null default true
- *	 event_date | timestamp without time zone | not null
- ******************************************************************************************************
- * Uses:
- * @file init_upload.sql
- * @file new_recording.sql
- * 
- * JSON keys: 
- * @param {int} user
- * @param {string} location
- * 
- * Expressjs:
- * @param {any} req 
- * @param {any} res 
- * @param {any} next 
- * 
- **/
+//  Table "public.pd_event"
+//
+//  	   Column   |            Type             |      Modifiers                         
+//  	------------+-----------------------------+-------------------------
+//  	 event_id   | integer                     | primary key counts up
+//  	 location   | point                       | 
+//  	 pd_user_id | integer                     | 
+//  	 active     | boolean                     | 
+//  	 event_date | timestamp without time zone |  
+//
+//   Files:
+//
+//	   	@file init_upload.sql
+//	   	@file new_recording.sql
+//  
+//   JSON keys: 
+//
+//   	@param {int} user
+//   	@param {string} location  
+//   Expressjs:
+//
+//   	@param {any} req 
+//   	@param {any} res 
+//   	@param {any} next 
+// This initiates the recording/streaming process by creating table entries and various other bookkeeping tasks.
 function upload (req, res, next) {
-/*	res.status(500).json({
-						status: 'error',
-						msg: "some error message",
-						upload_token: null,
-						url: null,
-					});*/
     console.log(req.body);
 	var { current_location, user } = req.body
 	var event
 	date = new Date()
 	var unique_token
 	db.tx( (t) => {
-        //console.log(t);
-		return t.one(users.get_by_google_id, {google_id: user}, u => +u.user_id) //google_id --> pd_user_id
+		// google_id --> pd_user_id
+		return t.one(users.get_by_google_id, {google_id: user}, u => +u.user_id) 
         .then( (u_id) => {
             console.log(u_id);
             unique_token = u_id + '_' + uuid()
@@ -198,7 +196,8 @@ function upload (req, res, next) {
                 timestamp: date
             };
             console.log(record_data);
-            return t.one(events.start_event, record_data, event => +event.event_id) //create event --> event_id
+			// create event --> event_id
+            return t.one(events.start_event, record_data, event => +event.event_id) 
         }).then( (event_id) => {
             console.log("Event ID: " + event_id);
             event = event_id;
@@ -212,8 +211,10 @@ function upload (req, res, next) {
 			res.status(200)
 				.json({
 					status: 'success',
-					upload_token: unique_token, //token all by itself
-					url: `${event}/${unique_token}/` //unique upload url
+					//token all by itself
+					upload_token: unique_token, 
+					//unique upload url
+					url: `${event}/${unique_token}/` 
 				});
 		})
     })
@@ -222,44 +223,43 @@ function upload (req, res, next) {
         res.status(500)
             .json({
                 status: 'error',
-                msg: err.message ? err.message : err, //if there is a more specific 'message' structure use that
+				//if there is a more specific 'message' structure use that
+                msg: err.message ? err.message : err, 
                 upload_token: null,
                 url: null,
             });
     });
 }
 
-/*****************************************************
- * Table "public.pd_recording"
- *	Column    |         Type           | Modifiers 
- *	----------+------------------------+-----------
- *	event_id  | integer                | not null
- *	filename  | character varying(255) | not null
- *****************************************************
- * Recieves the streaming data from client through a POST request.
- * JSON:
- * @param {int} id #filename
- * @param {int} event #event_id
- * 
- * @param {any} req 
- * @param {any} res 
- * @param {any} next 
- */
+
+//   Table "public.pd_recording"
+//
+// 		Column    |         Type           | Modifiers 
+// 		----------+------------------------+-----------
+// 		event_id  | integer                | not null
+// 		filename  | character varying(255) | not null
+//
+//  JSON:
+//
+// 	@param {int} id -- filename
+// 	@param {int} event -- event_id  
+// Expressjs:
+//
+// 	@param {any} req 
+// 	@param {any} res 
+// 	@param {any} next 
+// Recieves the streaming data from client through a POST request.
 function recieve_stream (req, res, next) {
 	file_id = req.params.id
 	event = req.params.event
 	console.log("Beginning transfer for unique key: " + file_id)
-
 	fileStream = fs.createWriteStream("./data_files/" + file_id + ".pcm")
 	req.pipe(fileStream);
-
-    // setup stream event in case someone wants to listen live.
-    live_streams[event] = new stream.Readable().on('stream_requested', (res) => {
-        console.log("STREAM REQUESTED!!!!");
-        //console.log(res);
+    
+    live_streams[event] = new stream.Readable().on('stream_requested', (res) => { // setup stream event in case someone wants to listen live.
+        console.log("Stream requested.");
         req.pipe(res);
     });
-
 
     var tick = 0
 	var total_bytes = 0;
@@ -268,21 +268,20 @@ function recieve_stream (req, res, next) {
 		active: false,
 		event_id: event
 	};
-	/**
-	 * Called any time data is recieved from the request. Logs how much is transferred
-	 * and also keeps track of the number of chunks. 
-	 * @param {bytes[]} chunk
-	 **/
+
+//
+// Called any time data is recieved from the request. Logs how much is transferred
+// and also keeps track of the number of chunks. 
+//
+// 		@param {bytes[]} chunk
+// This merely keeps track of some data, the transfer happens automatically due to the 
+// pipe above.
 	req.on('data', (chunk) => {
 		console.log(tick + ": " + (chunk.length / 1024).toFixed(2) + " KiB")
 		total_bytes = total_bytes + chunk.length
-		tick++;
-        // basically if someone is listening, write data
+		tick++;   
 	})
-	/**
-	 * Called when the connection / request is ended. 
-	 **/
-	req.on('end',  ( ) => {
+	req.on('end',  ( ) => { // Called when the connection / request is ended. 
         console.log(event)
         console.log(stop_data)
 		db.none(events.stop_event, stop_data)
@@ -295,29 +294,21 @@ function recieve_stream (req, res, next) {
 			});
         live_streams[event] = null;
 		console.log("End: " + (total_bytes / 1024).toFixed(2) + " KiB transfered.")
-		console.log("") //newline for prettier output on console
-		//live_streams['1'].end;
+		console.log("") // Newline for prettier output on console
 	});
 	req.on('error', (err) => {
         live_streams[event] = null;
 		errorMsg = err
 		console.log("Error: " + err)
 	});
-	/**
-	 * Send response to client. Minimal currently.
-	 **/
-	res.send({
+	res.send({ // Send response to client. 
 		"UploadCompleted": true,
 		"Error": errorMsg,
 	});
 }
 
-/**
- * Stream live events
- */
 var live_streams = {};
-
-function listen_stream (req, res) {
+function listen_stream (req, res) { // Stream live events
 	id = req.params.eventid;
     if (live_streams[id] != null ) {
         console.log(live_streams[id]);
@@ -328,7 +319,7 @@ function listen_stream (req, res) {
     }
 };
 
-
+// Export views for use elsewhere.
 module.exports = {
     query_all: query_all,
     nearby: nearby,
