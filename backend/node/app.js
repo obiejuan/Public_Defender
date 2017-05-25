@@ -72,10 +72,11 @@ function sql(file) {
 /**
  *	Setup QueryFiles once at startup
  */
-var stopEvent = sql('./sql_queries/pd_event/update_status.sql');
-var getNearby = sql('./sql_queries/pd_event/get_nearby.sql');
-var init_upload = sql('./sql_queries/pd_event/init_upload.sql');
-var new_recording = sql('./sql_queries/pd_recording/new_recording.sql');
+var path = '/home/payton/public_defender/backend/node/';                              
+var stopEvent = sql(path + 'sql_queries/pd_event/update_status.sql');                 
+var getNearby = sql(path + 'sql_queries/pd_event/get_nearby.sql');                    
+var init_upload = sql(path + 'sql_queries/pd_event/init_upload.sql');                 
+var new_recording = sql(path + 'sql_queries/pd_recording/new_recording.sql');  
 
 
 /**
