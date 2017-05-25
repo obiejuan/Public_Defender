@@ -51,19 +51,20 @@ public class GeoHandler {
 
     public boolean hasLocationOn()
     {
-        return geoManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER);
+        return geoManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
     // Setup the geolocation
     private void updateGeolocation() {
         // Just a required formality
-        if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(activity, "You didn't enable location permissions!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        Location geo = geoManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
-        if (geo != null && geoManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER)) {
+        Location geo = geoManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        if (geo != null && geoManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             geoPosition[0] = geo.getLatitude();
             geoPosition[1] = geo.getLongitude();
         } else {

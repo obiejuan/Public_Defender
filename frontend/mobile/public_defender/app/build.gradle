@@ -28,7 +28,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
-            debuggable true
+            debuggable false
             signingConfig signingConfigs.dev
         }
     }
@@ -38,14 +38,15 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.google.android.gms:play-services-auth:8.3.0'
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     //noinspection GradleCompatible
+    compile 'com.google.android.gms:play-services-auth:9.0.0'
     compile 'com.android.support:appcompat-v7:24.2.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.android.support:design:24.2.1'
+    compile 'com.google.android.gms:play-services-maps:9.0.0'
     testCompile 'junit:junit:4.12'
-    compile 'com.google.android.gms:play-services:8.3.0'
+
 }
