@@ -4,4 +4,4 @@
 
 
 SELECT * FROM pd_user 
-WHERE google_id = ($<g_userid>)
+WHERE google_id = $<google_id>;

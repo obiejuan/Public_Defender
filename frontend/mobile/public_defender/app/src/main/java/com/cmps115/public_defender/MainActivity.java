@@ -8,7 +8,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -32,9 +31,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
-
 import org.json.JSONException;
-
 import java.net.MalformedURLException;
 
 /*
@@ -273,17 +270,18 @@ public class MainActivity extends AppCompatActivity implements
         isRecording = savedInstanceState.getBoolean("is_recording");
 
     }
-
+    /******
+     * Called immediately after the service is built and connects to the main
+     * thread. So far just used to initialize mService, mBound variables.
+     */
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance
             StreamAudio.StreamBinder binder = (StreamAudio.StreamBinder) service;
             mService = binder.getService();
             mBound = true;
         }
-
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
             mService.stopStream();
@@ -315,7 +313,6 @@ public class MainActivity extends AppCompatActivity implements
 
             String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
             if (!isRecording) {
-                // USAGE EXAMPLE:
                 progress = new ProgressDialog(this);
                 progress.setTitle("Starting...");
                 progress.setMessage("Please wait.");
