@@ -30,4 +30,9 @@ public class Menu extends AppCompatActivity {
         Intent intent = new Intent(this, FileBrowser.class);
         startActivity(intent);
     }
+
+    public void gotoHowtoFaqs(View view) {
+        Intent intent = new Intent(this, HowtoFaqs.class);
+        startActivity(intent);
+    }
 }
