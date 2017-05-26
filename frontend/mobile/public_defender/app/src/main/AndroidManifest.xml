@@ -44,6 +44,9 @@
             android:label="public_defender"
             android:theme="@style/AppTheme"
             android:screenOrientation="portrait" />
+        <activity
+            android:name=".HowtoFaqs"
+            android:screenOrientation="portrait" />
 
         <service
             android:name=".StreamAudio"

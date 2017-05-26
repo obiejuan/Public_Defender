@@ -119,7 +119,18 @@
     to record until you explicitly stop it.  Recordings are streamed to our server, so even if your
     phone gets \"lost\" during the recording - you\'ll still have a retrievable copy.</string>
     <string name="faq_title">FAQ.</string>
-    <string name="faq_desc">foo</string>
+    <string name="faq_desc">
+        " Q: Where are my recordings stored?\n"
+        "A: Your recordings are stored both locally on your phone, and are stream to our secure server\n\n"
+        "Q: Who can access the recordings?\n"
+        "A: Only you!  The only time we touch your data is in the case where you require data retrieval.\n\n"
+        "Q: Is my data anonymous?\n"
+        "A: If you choose to, then yes.  Otherwise you are free to fill out your Profile if you wish for your information to be public.\n\n"
+        "Q: What happens in my phone is turned off?\n"
+        "A: If during a recording, all audio that was recorded up until the interruption is stored locally as well as on our servers.\n\n"
+        "Q: What information of mine is stored?\n"
+        "A: Only information that you choose to share, as well as basic information provided by the Google login.\n\n"
+    </string>
 
 
 </resources>

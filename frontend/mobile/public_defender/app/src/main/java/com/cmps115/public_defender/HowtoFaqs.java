@@ -1,5 +1,6 @@
 package com.cmps115.public_defender;
 
+import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
 /**
@@ -8,6 +9,10 @@ import android.support.v7.app.AppCompatActivity;
 
 public class HowtoFaqs extends AppCompatActivity {
 
-
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_howto_faqs);
+    }
 
 }
