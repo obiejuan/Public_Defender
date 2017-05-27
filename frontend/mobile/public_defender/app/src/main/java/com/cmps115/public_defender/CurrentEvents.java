@@ -8,15 +8,13 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -61,12 +59,18 @@ public class CurrentEvents extends AppCompatActivity {
         int viewId;
         List<String> data;
         HashMap<String, Integer> mIdMap = new HashMap<String, Integer>();
+        boolean listEmpty = false;
 
         public CustomArrayAdaptor(Context context, int viewId, List<String> objects) {
             super(context, viewId, objects);
             this.context = context;
             this.viewId = viewId;
             this.data = objects;
+            this.listEmpty = objects.size() < 1;
+            ListView listView = (ListView)findViewById(R.id.current_events_list_view);
+            listView.setVisibility(this.listEmpty ? View.GONE : View.VISIBLE);
+            LinearLayout noNearbyIncidents = (LinearLayout)findViewById(R.id.no_nearby_incidents_layout);
+            noNearbyIncidents.setVisibility(this.listEmpty ? View.VISIBLE : View.GONE);
 
             for (int i = 0; i < objects.size(); ++i) {
                 mIdMap.put(objects.get(i), i);
@@ -92,9 +96,16 @@ public class CurrentEvents extends AppCompatActivity {
             {
                 LayoutInflater infl = ((Activity)context).getLayoutInflater();
                 row = infl.inflate(viewId, parent, false);
-                TextView textView = (TextView)row.findViewById(R.id.eventText);
-                textView.setText(data.get(position));
-                row.setTag(textView);
+
+                TextView titleText= (TextView)row.findViewById(R.id.eventText);
+                titleText.setText(data.get(position));
+                row.setTag(titleText);
+
+                TextView addressText = (TextView)row.findViewById(R.id.addressText);
+                addressText.setText("Place holder address here");
+
+                TextView timeText = (TextView)row.findViewById(R.id.timeText);
+                timeText.setText("1m ago");
             }
             else
             {
@@ -141,8 +152,7 @@ public class CurrentEvents extends AppCompatActivity {
     }
 
     private void populateListViewWithCurrentEvents(JSONObject events) throws JSONException {
-        ListView listview = (ListView) findViewById(R.id.current_events);
-        //String[] values = {"Test1", "Test2"};
+        ListView listview = (ListView) findViewById(R.id.current_events_list_view);
         if (events.has("timeOut")) {
             return;
         }
@@ -150,7 +160,7 @@ public class CurrentEvents extends AppCompatActivity {
         event_list.length();
         SharedData.setKey("event_list", event_list);
         final ArrayList<String> list = new ArrayList<String>();
-        //event_list.getJSONObject();
+
         for (int i = 0; i < event_list.length(); ++i) {
             JSONObject this_obj = event_list.getJSONObject(i);
             String distance = this_obj.getString("event_dist");
@@ -170,7 +180,6 @@ public class CurrentEvents extends AppCompatActivity {
         progress.show();
     }
 
-    //unfinished
     private class getNearbyEvents extends AsyncTask<JSONObject, Integer, JSONObject> {
         protected JSONObject doInBackground(JSONObject...input_json) {
 
