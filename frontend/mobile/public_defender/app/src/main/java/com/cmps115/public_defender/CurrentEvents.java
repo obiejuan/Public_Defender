@@ -8,9 +8,13 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -26,21 +30,17 @@ import java.util.HashMap;
 import java.util.List;
 
 public class CurrentEvents extends AppCompatActivity {
-    ProgressDialog progress;
-    GoogleApiClient googleApiClient;
-    GoogleSignInAccount acct;
-    GeoHandler geoHandler;
+    private ProgressDialog progress;
+    private GoogleApiClient googleApiClient;
+    private GoogleSignInAccount acct;
+    private GeoHandler geoHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_current_events);
         findCurrentEventsOnServer();
-        progress = new ProgressDialog(this);
-        progress.setTitle("Finding nearby events..");
-        progress.setMessage("Hold on while we search..");
-        progress.setCancelable(false);
-        progress.show();
+        holdOnPopup();
         acct = (GoogleSignInAccount) SharedData.getKey("google_acct");
         googleApiClient = (GoogleApiClient) SharedData.getKey("google_api_client");
         Log.d("google_api_client:", String.valueOf(googleApiClient.isConnected()));
@@ -50,19 +50,28 @@ public class CurrentEvents extends AppCompatActivity {
     @Override
     protected void onStart(){
         super.onStart();
-       /* if (geoHandler == null) {
-            geoHandler = new GeoHandler(this);
-        }*/
         geoHandler = new GeoHandler(this);
-
     }
 
     private class CustomArrayAdaptor extends ArrayAdapter<String> {
 
+        Context context;
+        int viewId;
+        List<String> data;
         HashMap<String, Integer> mIdMap = new HashMap<String, Integer>();
+        boolean listEmpty = false;
 
-        public CustomArrayAdaptor(Context context, int textViewResourceId, List<String> objects) {
-            super(context, textViewResourceId, objects);
+        public CustomArrayAdaptor(Context context, int viewId, List<String> objects) {
+            super(context, viewId, objects);
+            this.context = context;
+            this.viewId = viewId;
+            this.data = objects;
+            this.listEmpty = objects.size() < 1;
+            ListView listView = (ListView)findViewById(R.id.current_events_list_view);
+            listView.setVisibility(this.listEmpty ? View.GONE : View.VISIBLE);
+            LinearLayout noNearbyIncidents = (LinearLayout)findViewById(R.id.no_nearby_incidents_layout);
+            noNearbyIncidents.setVisibility(this.listEmpty ? View.VISIBLE : View.GONE);
+
             for (int i = 0; i < objects.size(); ++i) {
                 mIdMap.put(objects.get(i), i);
             }
@@ -79,6 +88,32 @@ public class CurrentEvents extends AppCompatActivity {
             return true;
         }
 
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent)
+        {
+            View row = convertView;
+            if(row == null)
+            {
+                LayoutInflater infl = ((Activity)context).getLayoutInflater();
+                row = infl.inflate(viewId, parent, false);
+
+                TextView titleText= (TextView)row.findViewById(R.id.eventText);
+                titleText.setText(data.get(position));
+                row.setTag(titleText);
+
+                TextView addressText = (TextView)row.findViewById(R.id.addressText);
+                addressText.setText("Place holder address here");
+
+                TextView timeText = (TextView)row.findViewById(R.id.timeText);
+                timeText.setText("1m ago");
+            }
+            else
+            {
+                TextView textView = (TextView)row.findViewById(R.id.eventText);
+                textView.setText(data.get(position));
+            }
+            return row;
+        }
     }
 
     public void goHome(View view) {
@@ -87,12 +122,9 @@ public class CurrentEvents extends AppCompatActivity {
 
     public void refresh(View view) {
         findCurrentEventsOnServer();
-        progress = new ProgressDialog(this);
-        progress.setTitle("Finding nearby events..");
-        progress.setMessage("Hold on while we search..");
-        progress.setCancelable(false);
-        progress.show();
+        holdOnPopup();
     }
+
     public void gotoMap(View view){
         Intent intent = new Intent(this, EventMap.class);
         startActivity(intent);
@@ -120,8 +152,7 @@ public class CurrentEvents extends AppCompatActivity {
     }
 
     private void populateListViewWithCurrentEvents(JSONObject events) throws JSONException {
-        ListView listview = (ListView) findViewById(R.id.current_events);
-        //String[] values = {"Test1", "Test2"};
+        ListView listview = (ListView) findViewById(R.id.current_events_list_view);
         if (events.has("timeOut")) {
             return;
         }
@@ -129,19 +160,26 @@ public class CurrentEvents extends AppCompatActivity {
         event_list.length();
         SharedData.setKey("event_list", event_list);
         final ArrayList<String> list = new ArrayList<String>();
-        //event_list.getJSONObject();
+
         for (int i = 0; i < event_list.length(); ++i) {
             JSONObject this_obj = event_list.getJSONObject(i);
-            list.add("event# " + this_obj.getString("event_id") + " ----> " +
-                    String.format("%.2f", Double.parseDouble(this_obj.getString("event_dist")))
-                    + " mi.");
+            String distance = this_obj.getString("event_dist");
+            list.add("[" + this_obj.getString("event_id") + "]: " + distance.substring(0,  Math.max(0, Math.min(4, distance.length()))) + " miles away.");
         }
 
-        final CustomArrayAdaptor adapter = new CustomArrayAdaptor(this, android.R.layout.simple_list_item_1, list);
+        final CustomArrayAdaptor adapter = new CustomArrayAdaptor(this, R.layout.current_events_list_item, list);
         listview.setAdapter(adapter);
     }
 
-    //unfinished
+    private void holdOnPopup()
+    {
+        progress = new ProgressDialog(this);
+        progress.setTitle("Finding nearby events..");
+        progress.setMessage("Hold on while we search..");
+        progress.setCancelable(false);
+        progress.show();
+    }
+
     private class getNearbyEvents extends AsyncTask<JSONObject, Integer, JSONObject> {
         protected JSONObject doInBackground(JSONObject...input_json) {
 

@@ -115,9 +115,9 @@ public class MainActivity extends AppCompatActivity implements
     private void changeButtonState(boolean b) {
         Button rec = (Button) findViewById(R.id.record_button);
         rec.setEnabled(b);
-        Button curr_events = (Button) findViewById(R.id.button7);
+        Button curr_events = (Button) findViewById(R.id.current_events_button);
         curr_events.setEnabled(b);
-        Button menu_btn = (Button) findViewById(R.id.button5);
+        Button menu_btn = (Button) findViewById(R.id.my_recording_button);
         menu_btn.setEnabled(b);
     }
 
