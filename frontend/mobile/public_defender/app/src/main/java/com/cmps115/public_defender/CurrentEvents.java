@@ -8,9 +8,15 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -26,21 +32,17 @@ import java.util.HashMap;
 import java.util.List;
 
 public class CurrentEvents extends AppCompatActivity {
-    ProgressDialog progress;
-    GoogleApiClient googleApiClient;
-    GoogleSignInAccount acct;
-    GeoHandler geoHandler;
+    private ProgressDialog progress;
+    private GoogleApiClient googleApiClient;
+    private GoogleSignInAccount acct;
+    private GeoHandler geoHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_current_events);
         findCurrentEventsOnServer();
-        progress = new ProgressDialog(this);
-        progress.setTitle("Finding nearby events..");
-        progress.setMessage("Hold on while we search..");
-        progress.setCancelable(false);
-        progress.show();
+        holdOnPopup();
         acct = (GoogleSignInAccount) SharedData.getKey("google_acct");
         googleApiClient = (GoogleApiClient) SharedData.getKey("google_api_client");
         Log.d("google_api_client:", String.valueOf(googleApiClient.isConnected()));
@@ -50,19 +52,22 @@ public class CurrentEvents extends AppCompatActivity {
     @Override
     protected void onStart(){
         super.onStart();
-       /* if (geoHandler == null) {
-            geoHandler = new GeoHandler(this);
-        }*/
         geoHandler = new GeoHandler(this);
-
     }
 
     private class CustomArrayAdaptor extends ArrayAdapter<String> {
 
+        Context context;
+        int viewId;
+        List<String> data;
         HashMap<String, Integer> mIdMap = new HashMap<String, Integer>();
 
-        public CustomArrayAdaptor(Context context, int textViewResourceId, List<String> objects) {
-            super(context, textViewResourceId, objects);
+        public CustomArrayAdaptor(Context context, int viewId, List<String> objects) {
+            super(context, viewId, objects);
+            this.context = context;
+            this.viewId = viewId;
+            this.data = objects;
+
             for (int i = 0; i < objects.size(); ++i) {
                 mIdMap.put(objects.get(i), i);
             }
@@ -79,6 +84,25 @@ public class CurrentEvents extends AppCompatActivity {
             return true;
         }
 
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent)
+        {
+            View row = convertView;
+            if(row == null)
+            {
+                LayoutInflater infl = ((Activity)context).getLayoutInflater();
+                row = infl.inflate(viewId, parent, false);
+                TextView textView = (TextView)row.findViewById(R.id.eventText);
+                textView.setText(data.get(position));
+                row.setTag(textView);
+            }
+            else
+            {
+                TextView textView = (TextView)row.findViewById(R.id.eventText);
+                textView.setText(data.get(position));
+            }
+            return row;
+        }
     }
 
     public void goHome(View view) {
@@ -87,12 +111,9 @@ public class CurrentEvents extends AppCompatActivity {
 
     public void refresh(View view) {
         findCurrentEventsOnServer();
-        progress = new ProgressDialog(this);
-        progress.setTitle("Finding nearby events..");
-        progress.setMessage("Hold on while we search..");
-        progress.setCancelable(false);
-        progress.show();
+        holdOnPopup();
     }
+
     public void gotoMap(View view){
         Intent intent = new Intent(this, EventMap.class);
         startActivity(intent);
@@ -132,13 +153,21 @@ public class CurrentEvents extends AppCompatActivity {
         //event_list.getJSONObject();
         for (int i = 0; i < event_list.length(); ++i) {
             JSONObject this_obj = event_list.getJSONObject(i);
-            list.add("event# " + this_obj.getString("event_id") + " ----> " +
-                    String.format("%.2f", Double.parseDouble(this_obj.getString("event_dist")))
-                    + " mi.");
+            String distance = this_obj.getString("event_dist");
+            list.add("[" + this_obj.getString("event_id") + "]: " + distance.substring(0,  Math.max(0, Math.min(4, distance.length()))) + " miles away.");
         }
 
-        final CustomArrayAdaptor adapter = new CustomArrayAdaptor(this, android.R.layout.simple_list_item_1, list);
+        final CustomArrayAdaptor adapter = new CustomArrayAdaptor(this, R.layout.current_events_list_item, list);
         listview.setAdapter(adapter);
+    }
+
+    private void holdOnPopup()
+    {
+        progress = new ProgressDialog(this);
+        progress.setTitle("Finding nearby events..");
+        progress.setMessage("Hold on while we search..");
+        progress.setCancelable(false);
+        progress.show();
     }
 
     //unfinished
@@ -149,7 +178,7 @@ public class CurrentEvents extends AppCompatActivity {
             JSONObject input = input_json[number_req-1]; //only process the last (most recent) request
             URL url = null;
             try {
-                url = new URL("http://10.0.2.2:3000/nearby/");
+                url = new URL("http://138.68.200.193:3000/nearby/");
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
