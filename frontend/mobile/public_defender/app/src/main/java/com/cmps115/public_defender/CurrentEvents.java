@@ -149,7 +149,7 @@ public class CurrentEvents extends AppCompatActivity {
             JSONObject input = input_json[number_req-1]; //only process the last (most recent) request
             URL url = null;
             try {
-                url = new URL("http://10.0.2.2:3000/nearby/");
+                url = new URL("http://138.68.200.193:3000/nearby/");
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
