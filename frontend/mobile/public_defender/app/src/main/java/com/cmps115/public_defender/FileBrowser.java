@@ -73,7 +73,7 @@ public class FileBrowser extends ListActivity {
             // For each file in our list of files.
             //for (String file : list) {
             for (int i = 0; i < f_list.length; i++) {
-                if (!f_list[i].getName().startsWith(".")) {
+                if (f_list[i].getName().endsWith(".wav")) {
                     //values.add(file);
                     values.add(f_list[i].getName());
                 }
