@@ -1,13 +1,8 @@
-//
-// Desctiption of class and usage
-//
-//
+/** @author Bryan McCoid  bmccoid_at_ucsc.edu */
 
 // Imports and initializations.
 var promise = require('bluebird');
-var pgp = require('pg-promise')({
-	promiseLib: promise
-});
+var pgp = require('pg-promise')({ promiseLib: promise });
 
 // PostgreSQL server values
 var cn = {
@@ -21,6 +16,5 @@ var cn = {
 // Database object
 var db = pgp(cn);
 
-module.exports = {
-    connection: db
-}
+/**@exports connection */
+module.exports = { connection: db };

@@ -1,3 +1,5 @@
+/** @author Bryan McCoid  bmccoid_at_ucsc.edu */
+
 // requirements and imports
 var db = require('./db.js').connection;
 var q = require('./sql.js');
@@ -6,15 +8,14 @@ var events = q.events;
 var recordings = q.recordings;
 const fs = require('fs');
 var stream = require('stream');
+var console = require("console");
 
-// Generate a unique id (for filenames)
-//
-// Used later.
+
 const uuid = require('uuid/v4');
 
 //Just returns all events, with associated user and recordings.
 function query_all (req, res, next) { 
-	db.any(sql.get_all)
+	db.any(q.get_all)
     .then( (data) => {
         res.status(200)
             .json({
@@ -28,19 +29,18 @@ function query_all (req, res, next) {
     });
 }
 
-// 
-//   Get's the nearby active=true events for the parameters in request.
-//   
-//   Files: 
-//
-//   	get_nearby.sql
-//   JSON keys: 
-//
-//   	@param {string} current_location
-//   	@param {int} distance
-//
-function nearby(req, res, next) {
-	var date_now = Date.now();
+/**
+ * Get's the nearby active=true events for the parameters in request.
+ * 
+ * @param {object} req - The Express_js request object.
+ * @param {object} res - The Express_js response object.
+ * @return {void} - Doesn't return anything.
+ * 
+ * JSON keys: 
+ * 	@param {string} current_location
+ * 	@param {int} distance
+ */
+function nearby(req, res) {
 	var query = {
 		current_location: req.body.current_location,
 		distance: req.body.distance
@@ -63,25 +63,29 @@ function nearby(req, res, next) {
 					status: 'error',
 					msg: err,
 				})
-		}).catch( (err) => {});
+		}).catch( (err) => {
+			console.error(err);
+		});
 }
 
-
-// Lists all Users
-//   
-// Table "public.pd_user"
-//
-//			   Name:	    | 	Datatype:		             |  other..
-//	  	  ----------------+-----------------------------------+-----------------
-//			user_id         | 	integer                       |  primary key
-//			auth_key	    | 	character varying(255)        |
-//			email		   | 	character varying(255)        |
-//			google_id	   | 	character varying(255)        |
-//			google_firstname| 	character varying(255)        |
-//			google_lastname |     character varying(255)        |
-//			date_created	|     timestamp with time zone      |  auto-filled
-// All users:
-function get_users(req, res, next) {
+/**
+ * Lists all Users:
+ *	Table "public.pd_user"
+ *		Name:	    | 	Datatype:		              |  other..
+ *	----------------+---------------------------------+-----------------
+ *	user_id         | 	integer                       |  primary key
+ *	auth_key	    | 	character varying(255)        |
+ *	email		    | 	character varying(255)        |
+ *	google_id	    | 	character varying(255)        |
+ *	google_firstname| 	character varying(255)        |
+ *	google_lastname |   character varying(255)        |
+ *	date_created	|   timestamp with time zone      |  auto-filled
+ * 
+ * @param {object} req - The Express_js request object.
+ * @param {object} res - The Express_js response object.
+ * @return {void} - Doesn't return anything.
+ */
+function get_users(req, res) {
 	db.any('SELECT * FROM pd_user').then( (data) => {
 		console.log(data);
 			res.status(200)
@@ -96,16 +100,19 @@ function get_users(req, res, next) {
 					status: 'error',
 					msg: err,
 			}).catch( (err) => {
-				 console.error(err)
+				console.error(err);
 			})
 		}); 
-};
+}
 
-// Get a specific user's data: 
-//
-// 		@param {int} userid
-function get_user(req, res, next){
-	id = req.params.userid;
+/**
+ * 
+ * @param {object} req - The Express_js request object.
+ * @param {object} res - The Express_js response object.
+ * @return {void} - Doesn't return anything.
+ */
+function get_user(req, res){
+	var id = req.params.userid;
 	db.any(users.get, {user_id: id}).then( (data) => {
 			console.log(data);
 			res.status(200)
@@ -123,16 +130,17 @@ function get_user(req, res, next){
 			console.error(err)
 		})
 	}); 
-};
+}
 
-
-// Get all events and recordings associated with a user
-//
-//		@param {int} userid -- used for looking up user
-//
-// Not currently in use.
-function get_user_events(req, res, next) {
-	id = req.params.userid;
+/**
+ * @deprecated
+ * 
+ * @param {object} req - The Express_js request object.
+ * @param {object} res - The Express_js response object.
+ * @return {void} - Doesn't return anything.
+ */
+function get_user_events(req, res) {
+	var id = req.params.userid;
 	db.any(users.get_events, {user_id: id}).then( (data) => {
 			console.log(data);
 			res.status(200)
@@ -150,38 +158,27 @@ function get_user_events(req, res, next) {
 			console.error(err)
 		})
 	});
-};
+}
 
-//  Table "public.pd_event"
-//
-//  	   Column   |            Type             |      Modifiers                         
-//  	------------+-----------------------------+-------------------------
-//  	 event_id   | integer                     | primary key counts up
-//  	 location   | point                       | 
-//  	 pd_user_id | integer                     | 
-//  	 active     | boolean                     | 
-//  	 event_date | timestamp without time zone |  
-//
-//   Files:
-//
-//	   	@file init_upload.sql
-//	   	@file new_recording.sql
-//  
-//   JSON keys: 
-//
-//   	@param {int} user
-//   	@param {string} location  
-//   Expressjs:
-//
-//   	@param {any} req 
-//   	@param {any} res 
-//   	@param {any} next 
-// This initiates the recording/streaming process by creating table entries and various other bookkeeping tasks.
-function upload (req, res, next) {
+/**
+ * 
+ * Table "public.pd_recording"
+ *		Column    |         Type           | Modifiers  
+ *		----------+------------------------+-----------
+ *		event_id  | integer                | not null
+ *		filename  | character varying(255) | not null
+ *
+ * @file init_upload.sql
+ * 
+ * @param {object} req - The Express_js request object.
+ * @param {object} res - The Express_js response object.
+ * @return {void} - Doesn't return anything.
+ */
+function upload (req, res) {
     console.log(req.body);
 	var { current_location, user } = req.body
 	var event
-	date = new Date()
+	var date = new Date()
 	var unique_token
 	db.tx( (t) => {
 		// google_id --> pd_user_id
@@ -189,7 +186,7 @@ function upload (req, res, next) {
         .then( (u_id) => {
             console.log(u_id);
             unique_token = u_id + '_' + uuid()
-            record_data = {
+            var record_data = {
                 user_id: u_id,
                 geo: current_location,
                 active: true,
@@ -201,7 +198,7 @@ function upload (req, res, next) {
         }).then( (event_id) => {
             console.log("Event ID: " + event_id);
             event = event_id;
-            recording_data = {
+            var recording_data = {
                 event_id: event_id,
                 filename: unique_token
             };
@@ -231,29 +228,30 @@ function upload (req, res, next) {
     });
 }
 
-
-//   Table "public.pd_recording"
-//
-// 		Column    |         Type           | Modifiers 
-// 		----------+------------------------+-----------
-// 		event_id  | integer                | not null
-// 		filename  | character varying(255) | not null
-//
-//  JSON:
-//
-// 	@param {int} id -- filename
-// 	@param {int} event -- event_id  
-// Expressjs:
-//
-// 	@param {any} req 
-// 	@param {any} res 
-// 	@param {any} next 
-// Recieves the streaming data from client through a POST request.
-function recieve_stream (req, res, next) {
-	file_id = req.params.id
-	event = req.params.event
+/**
+ * Main stream recieving function. After the stream is over with it changes the
+ * active=true to active=false in the pd_event table.
+ * 
+ * Table "public.pd_event"
+ *
+ *	   Column   |            Type             |      Modifiers                         
+ *	------------+-----------------------------+-------------------------
+ *	 event_id   | integer                     | primary key counts up
+ *	 location   | point                       | 
+ *	 pd_user_id | integer                     | 
+ *	 active     | boolean                     | 
+ *	 event_date | timestamp without time zone |  
+ *
+ *
+ * @param {object} req - The Express_js request object.
+ * @param {object} res - The Express_js response object.
+ * @return {void} - Doesn't return anything.
+ */
+function recieve_stream (req, res) {
+	var file_id = req.params.id
+	var event = req.params.event
 	console.log("Beginning transfer for unique key: " + file_id)
-	fileStream = fs.createWriteStream("./data_files/" + file_id + ".pcm")
+	var fileStream = fs.createWriteStream("./data_files/" + file_id + ".pcm")
 	req.pipe(fileStream);
     
     live_streams[event] = new stream.Readable().on('stream_requested', (res) => { // setup stream event in case someone wants to listen live.
@@ -268,14 +266,6 @@ function recieve_stream (req, res, next) {
 		active: false,
 		event_id: event
 	};
-
-//
-// Called any time data is recieved from the request. Logs how much is transferred
-// and also keeps track of the number of chunks. 
-//
-// 		@param {bytes[]} chunk
-// This merely keeps track of some data, the transfer happens automatically due to the 
-// pipe above.
 	req.on('data', (chunk) => {
 		console.log(tick + ": " + (chunk.length / 1024).toFixed(2) + " KiB")
 		total_bytes = total_bytes + chunk.length
@@ -309,7 +299,7 @@ function recieve_stream (req, res, next) {
 
 var live_streams = {};
 function listen_stream (req, res) { // Stream live events
-	id = req.params.eventid;
+	var id = req.params.eventid;
     if (live_streams[id] != null ) {
         console.log(live_streams[id]);
         live_streams[id].emit('stream_requested', res);
@@ -317,7 +307,7 @@ function listen_stream (req, res) { // Stream live events
     else {
         res.sendStatus(404);
     }
-};
+}
 
 // Export views for use elsewhere.
 module.exports = {

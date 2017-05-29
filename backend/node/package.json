@@ -2,9 +2,9 @@
   "name": "public_defender",
   "version": "1.0.0",
   "description": "Public Defender Server",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha --recursive"
   },
   "repository": {
     "type": "git",
@@ -16,11 +16,14 @@
   "dependencies": {
     "bluebird": "^3.5.0",
     "body-parser": "^1.17.1",
+    "chai": "^4.0.0",
+    "eslint": "^3.19.0",
     "express": "^4.15.2",
     "google-auth-library": "^0.10.0",
+    "mocha": "^3.4.2",
     "nodemon": "^1.11.0",
     "pg-promise": "^5.6.4",
-    "socket.io": "^2.0.1",
+    "sinon": "^2.3.2",
     "uuid": "^3.0.1"
   }
 }
