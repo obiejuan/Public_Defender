@@ -6,6 +6,8 @@ var events = q.events;
 var recordings = q.recordings;
 const fs = require('fs');
 var stream = require('stream');
+var console = require('console');
+var timer = require('timers');
 
 // Generate a unique id (for filenames)
 //
@@ -13,8 +15,8 @@ var stream = require('stream');
 const uuid = require('uuid/v4');
 
 //Just returns all events, with associated user and recordings.
-function query_all (req, res, next) { 
-	db.any(sql.get_all)
+function query_all (req, res) { 
+	db.any(q.get_all)
     .then( (data) => {
         res.status(200)
             .json({
@@ -24,7 +26,7 @@ function query_all (req, res, next) {
             });
     })
     .catch( (err) => { 
-        return next(err);
+        console.error(err);
     });
 }
 
@@ -39,7 +41,7 @@ function query_all (req, res, next) {
 //   	@param {string} current_location
 //   	@param {int} distance
 //
-function nearby(req, res, next) {
+function nearby(req, res) {
 	var date_now = Date.now();
 	var query = {
 		current_location: req.body.current_location,
@@ -81,7 +83,7 @@ function nearby(req, res, next) {
 //			google_lastname |     character varying(255)        |
 //			date_created	|     timestamp with time zone      |  auto-filled
 // All users:
-function get_users(req, res, next) {
+function get_users(req, res) {
 	db.any('SELECT * FROM pd_user').then( (data) => {
 		console.log(data);
 			res.status(200)
@@ -89,23 +91,23 @@ function get_users(req, res, next) {
 					status: 'success',
 					data: data
 				});
+	}).catch( (err) => {
+		console.error(err)
+		res.status(500)
+			.json({
+				status: 'error',
+				msg: err,
 		}).catch( (err) => {
-			console.error(err)
-			res.status(500)
-				.json({
-					status: 'error',
-					msg: err,
-			}).catch( (err) => {
-				 console.error(err)
-			})
-		}); 
+				console.error(err)
+		})
+	}); 
 };
 
 // Get a specific user's data: 
 //
 // 		@param {int} userid
-function get_user(req, res, next){
-	id = req.params.userid;
+function get_user(req, res){
+	var id = req.params.userid;
 	db.any(users.get, {user_id: id}).then( (data) => {
 			console.log(data);
 			res.status(200)
@@ -131,8 +133,8 @@ function get_user(req, res, next){
 //		@param {int} userid -- used for looking up user
 //
 // Not currently in use.
-function get_user_events(req, res, next) {
-	id = req.params.userid;
+function get_user_events(req, res) {
+	var id = req.params.userid;
 	db.any(users.get_events, {user_id: id}).then( (data) => {
 			console.log(data);
 			res.status(200)
@@ -177,11 +179,11 @@ function get_user_events(req, res, next) {
 //   	@param {any} res 
 //   	@param {any} next 
 // This initiates the recording/streaming process by creating table entries and various other bookkeeping tasks.
-function upload (req, res, next) {
+function upload (req, res) {
     console.log(req.body);
 	var { current_location, user } = req.body
 	var event
-	date = new Date()
+	var date = new Date()
 	var unique_token
 	db.tx( (t) => {
 		// google_id --> pd_user_id
@@ -249,11 +251,12 @@ function upload (req, res, next) {
 // 	@param {any} res 
 // 	@param {any} next 
 // Recieves the streaming data from client through a POST request.
-function recieve_stream (req, res, next) {
-	file_id = req.params.id
-	event = req.params.event
+function recieve_stream (req, res) {
+	var file_id = req.params.id;
+	var event = req.params.event;
+	console.log(req.event);
 	console.log("Beginning transfer for unique key: " + file_id)
-	fileStream = fs.createWriteStream("./data_files/" + file_id + ".pcm")
+	var fileStream = fs.createWriteStream("./data_files/" + file_id + ".pcm")
 	req.pipe(fileStream);
     
     live_streams[event] = new stream.Readable().on('stream_requested', (res) => { // setup stream event in case someone wants to listen live.
@@ -268,7 +271,7 @@ function recieve_stream (req, res, next) {
 		active: false,
 		event_id: event
 	};
-
+	var last_timer = null;
 //
 // Called any time data is recieved from the request. Logs how much is transferred
 // and also keeps track of the number of chunks. 
@@ -280,7 +283,14 @@ function recieve_stream (req, res, next) {
 		console.log(tick + ": " + (chunk.length / 1024).toFixed(2) + " KiB")
 		total_bytes = total_bytes + chunk.length
 		tick++;   
-	})
+		//console.log(last_timer);
+		timer.clearTimeout(last_timer);
+		last_timer = timer.setTimeout( () => {
+			console.log("No data in 10 seconds. Closing connection.");
+			req.emit('end');
+		}, 10000 );
+	});
+
 	req.on('end',  ( ) => { // Called when the connection / request is ended. 
         console.log(event)
         console.log(stop_data)
@@ -300,6 +310,7 @@ function recieve_stream (req, res, next) {
         live_streams[event] = null;
 		errorMsg = err
 		console.log("Error: " + err)
+		req.emit('end');
 	});
 	res.send({ // Send response to client. 
 		"UploadCompleted": true,
@@ -309,7 +320,7 @@ function recieve_stream (req, res, next) {
 
 var live_streams = {};
 function listen_stream (req, res) { // Stream live events
-	id = req.params.eventid;
+	var id = req.params.eventid;
     if (live_streams[id] != null ) {
         console.log(live_streams[id]);
         live_streams[id].emit('stream_requested', res);
