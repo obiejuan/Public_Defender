@@ -15,6 +15,7 @@ import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -39,8 +40,6 @@ public class CurrentEvents extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_current_events);
-        findCurrentEventsOnServer();
-        holdOnPopup();
         acct = (GoogleSignInAccount) SharedData.getKey("google_acct");
         googleApiClient = (GoogleApiClient) SharedData.getKey("google_api_client");
         Log.d("google_api_client:", String.valueOf(googleApiClient.isConnected()));
@@ -51,6 +50,7 @@ public class CurrentEvents extends AppCompatActivity {
     protected void onStart(){
         super.onStart();
         geoHandler = new GeoHandler(this);
+        findCurrentEventsOnServer();
     }
 
     private class CustomArrayAdaptor extends ArrayAdapter<String> {
@@ -122,7 +122,6 @@ public class CurrentEvents extends AppCompatActivity {
 
     public void refresh(View view) {
         findCurrentEventsOnServer();
-        holdOnPopup();
     }
 
     public void gotoMap(View view){
@@ -132,10 +131,17 @@ public class CurrentEvents extends AppCompatActivity {
 
     private void findCurrentEventsOnServer()
     {
-        geoHandler = new GeoHandler(this);
         double[] geo = {0.0, 0.0};
-        if(geoHandler.hasLocationOn())
+        if(geoHandler.hasGeolocation()) {
             geo = geoHandler.getGeolocation();
+        }
+        else
+        {
+            Toast.makeText(getApplicationContext(), "We couldn't find your location! Try again later.", Toast.LENGTH_SHORT);
+            return;
+        }
+
+        holdOnPopup();
 
         String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
         Log.d("[GEO_DATA]", geo_data);

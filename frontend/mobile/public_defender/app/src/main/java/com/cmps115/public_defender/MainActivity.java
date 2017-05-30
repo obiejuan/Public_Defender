@@ -169,10 +169,9 @@ public class MainActivity extends AppCompatActivity implements
             });
         }
 
-        if (geoHandler == null) {
-            geoHandler = new GeoHandler(this);
-        }
+        geoHandler = new GeoHandler(this);
     }
+
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         // An unresolvable error has occurred and Google APIs (including Sign-In) will not
@@ -308,8 +307,14 @@ public class MainActivity extends AppCompatActivity implements
             Context context = getApplicationContext();
 
             double[] geo = {0.0, 0.0};
-            if(geoHandler.hasLocationOn())
+            if(geoHandler.hasGeolocation()) {
                 geo = geoHandler.getGeolocation();
+            }
+            else
+            {
+                Toast.makeText(getApplicationContext(), "We couldn't find your location! Try again later.", Toast.LENGTH_LONG);
+                return;
+            }
 
             if(!(geo[0] == 0.0 && geo[1] == 0.0))
                 Log.d("[GEO]", (geo[0] + ", " + geo[1]));
@@ -457,11 +462,11 @@ public class MainActivity extends AppCompatActivity implements
                 double[] location = geoHandler.getGeolocation();
                 // Debug info
                 Log.d("Geolocation permission", "Allowed: " + (grantResults[0] == PackageManager.PERMISSION_GRANTED));
-                Log.d("Has location on", "Location on: " + geoHandler.hasLocationOn());
+                Log.d("Has location on", "Location on: " + geoHandler.hasGeolocation());
                 Log.d("Geolocation", "Lat: " + location[0] + " Long: " + location[1]);
                 break;
         }
-        if (!permissionToRecordAccepted ) finish();
+        if (!permissionToRecordAccepted) finish();
     }
 
 

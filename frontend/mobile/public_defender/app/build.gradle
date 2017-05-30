@@ -36,6 +36,10 @@ android {
     }
 }
 
+ext {
+    playServicesVersion = '9.0.0'
+}
+
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
@@ -48,5 +52,6 @@ dependencies {
     compile 'com.android.support:design:24.2.1'
     compile 'com.google.android.gms:play-services-maps:9.0.0'
     testCompile 'junit:junit:4.12'
-
+    compile "com.google.android.gms:play-services-maps:${playServicesVersion}"
+    compile "com.google.android.gms:play-services-location:${playServicesVersion}"
 }
