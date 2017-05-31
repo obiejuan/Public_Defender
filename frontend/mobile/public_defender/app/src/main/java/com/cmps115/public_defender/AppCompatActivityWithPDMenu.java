@@ -14,8 +14,8 @@ public class AppCompatActivityWithPDMenu extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(android.view.Menu menu){
-        MenuInflater inflator = getMenuInflater();
-        inflator.inflate(R.menu.app_menu, menu);
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.app_menu, menu);
         getSupportActionBar().setTitle("Public Defender");
         return true;
     }
