@@ -2,7 +2,9 @@ package com.cmps115.public_defender;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
-import android.view.*;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+
 
 /**
  * Created by Brandon on 05/31/17.
