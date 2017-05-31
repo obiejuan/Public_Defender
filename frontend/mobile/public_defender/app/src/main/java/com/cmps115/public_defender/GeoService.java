@@ -24,7 +24,7 @@ public class GeoService extends Service {
                 // this is where the geo computations need to happen.
                 // this does not include the listeners or anything like that.
                 // equiv. to the run() function inside GetLastLocation in the ReliableGeolocationProvider.java
-                
+
             }
         };
         handler.postDelayed(r, 1000);
