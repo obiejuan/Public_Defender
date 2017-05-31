@@ -96,8 +96,16 @@ public class MainActivity extends AppCompatActivity implements
                 this.startActivity(sendToHome);
                 break;
             case R.id.action_sendToMyRecordings:
-                Intent sendToMyRecordings = new Intent(this, MyRecordings.class);
+                Intent sendToMyRecordings = new Intent(this, FileBrowser.class);
                 this.startActivity(sendToMyRecordings);
+                break;
+            case R.id.action_sendToCurrentEvents:
+                Intent sendToMyCurrentEvents = new Intent(this, CurrentEvents.class);
+                this.startActivity(sendToMyCurrentEvents);
+                break;
+            case R.id.action_sendToFAQ:
+                Intent sendToFAQ = new Intent(this, HowtoFaqs.class);
+                this.startActivity(sendToFAQ);
                 break;
             default:
                 return super.onOptionsItemSelected(item);
@@ -145,10 +153,10 @@ public class MainActivity extends AppCompatActivity implements
     private void changeButtonState(boolean b) {
         Button rec = (Button) findViewById(R.id.record_button);
         rec.setEnabled(b);
-        Button curr_events = (Button) findViewById(R.id.current_events_button);
-        curr_events.setEnabled(b);
-        Button menu_btn = (Button) findViewById(R.id.my_recording_button);
-        menu_btn.setEnabled(b);
+        //Button curr_events = (Button) findViewById(R.id.current_events_button);
+        //curr_events.setEnabled(b);
+        //Button menu_btn = (Button) findViewById(R.id.my_recording_button);
+        //menu_btn.setEnabled(b);
     }
 
     private void signOut() {

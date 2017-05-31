@@ -117,6 +117,8 @@
     <!-- Menu Strings-->
     <string name="menu_home">Home</string>
     <string name="menu_myRecordings">My Recordings</string>
+    <string name="menu_current_events">Current Events</string>
+    <string name="menu_faq">FAQs</string>
 
     <!-- How-To / FAQ strings -->
     <string name="howtofaq">How-To/FAQ</string>
