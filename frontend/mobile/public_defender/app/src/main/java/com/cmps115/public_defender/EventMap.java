@@ -60,7 +60,7 @@ public class EventMap extends FragmentActivity implements OnMapReadyCallback {
                 try {
                     String point = events.getJSONObject(i).getString("location");
                     double[] point_numeric = parse_point(point);
-                    LatLng mark = new LatLng(point_numeric[1], point_numeric[0]);
+                    LatLng mark = new LatLng(point_numeric[0], point_numeric[1]);
                     builder.include(mark);
                     Log.d("[MapPoint]", point);
                     String title = events.getJSONObject(i).getString("location");

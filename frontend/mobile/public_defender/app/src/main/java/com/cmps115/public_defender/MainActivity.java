@@ -69,10 +69,14 @@ public class MainActivity extends AppCompatActivity implements
     private static final String DEV_REAL_PHONE = "192.168.1.118"; // your local LAN IP (this is bryan's for example ;)
     private static final String PRODUCTION_SERVER = "138.68.200.193";
 
-    private final String externalServerIP = PRODUCTION_SERVER;
+    private final String externalServerIP = DEV_REAL_PHONE;
     private final String externalServerPort = "3000";
+
     boolean mBound = false;
     StreamAudio mService = null;
+
+    GeoService geo_service = null;
+    boolean geo_bound = false;
 
     ProgressDialog progress;
 
@@ -168,6 +172,8 @@ public class MainActivity extends AppCompatActivity implements
                 }
             });
         }
+        Intent geoIntent = new Intent(this, GeoService.class);
+        bindService(geoIntent, geo_connection, Context.BIND_AUTO_CREATE);
 
         geoHandler = new GeoHandler(this);
     }
@@ -291,6 +297,20 @@ public class MainActivity extends AppCompatActivity implements
         }
     };
 
+    private ServiceConnection geo_connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            GeoService.GeoBinder binder = (GeoService.GeoBinder) service;
+            geo_service = binder.getService();
+            geo_bound = true;
+        }
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            geo_bound = false;
+        }
+    };
+
     public void toastErrorMessage(Exception e) {
         Context context = getApplicationContext();
         CharSequence error_txt = e.getMessage();
@@ -317,7 +337,7 @@ public class MainActivity extends AppCompatActivity implements
             }
 
             if(!(geo[0] == 0.0 && geo[1] == 0.0))
-                Log.d("[GEO]", (geo[0] + ", " + geo[1]));
+                Log.d("[GEO]", (geo[1] + ", " + geo[0]));
 
             String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
             if (!isRecording) {
