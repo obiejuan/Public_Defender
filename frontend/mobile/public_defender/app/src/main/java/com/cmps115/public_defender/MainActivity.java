@@ -79,41 +79,7 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
     StreamAudio mService = null;
 
     ProgressDialog progress;
-/**
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu){
-        MenuInflater inflator = getMenuInflater();
-        inflator.inflate(R.menu.app_menu, menu);
-        getSupportActionBar().setTitle("Public Defender");
-        return true;
-    }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item){
-        switch(item.getItemId()){
-            case R.id.action_sendToHome:
-                Intent sendToHome = new Intent(this, MainActivity.class);
-                this.startActivity(sendToHome);
-                break;
-            case R.id.action_sendToMyRecordings:
-                Intent sendToMyRecordings = new Intent(this, FileBrowser.class);
-                this.startActivity(sendToMyRecordings);
-                break;
-            case R.id.action_sendToCurrentEvents:
-                Intent sendToMyCurrentEvents = new Intent(this, CurrentEvents.class);
-                this.startActivity(sendToMyCurrentEvents);
-                break;
-            case R.id.action_sendToFAQ:
-                Intent sendToFAQ = new Intent(this, HowtoFaqs.class);
-                this.startActivity(sendToFAQ);
-                break;
-            default:
-                return super.onOptionsItemSelected(item);
-
-        }
-        return true;
-    }
-*/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
