@@ -6,7 +6,9 @@
     android:layout_height="match_parent"
     tools:context="com.cmps115.public_defender.MainActivity"
     tools:layout_editor_absoluteX="0dp"
-    tools:layout_editor_absoluteY="25dp">
+    tools:layout_editor_absoluteY="25dp"
+    android:background="@drawable/lt_dangle">
+
 
 
     <TextView
@@ -20,7 +22,6 @@
         android:textSize="15sp"
         android:textStyle="bold"
         app:layout_constraintLeft_toLeftOf="parent"
-        tools:layout_constraintBottom_creator="1"
         tools:layout_constraintLeft_creator="1"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginTop="8dp" />
@@ -60,10 +61,9 @@
         android:id="@+id/current_events_button"
         android:layout_width="0dp"
         android:layout_height="50dp"
-        android:layout_marginBottom="0dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginRight="8dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
         android:layout_marginStart="16dp"
         android:enabled="false"
         android:onClick="gotoCurrentEvents"
@@ -80,12 +80,11 @@
 
     <Button
         android:id="@+id/my_recording_button"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="50dp"
-        android:layout_marginBottom="0dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginRight="8dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
         android:layout_marginStart="16dp"
         android:enabled="false"
         android:onClick="gotoMyRecordings"
