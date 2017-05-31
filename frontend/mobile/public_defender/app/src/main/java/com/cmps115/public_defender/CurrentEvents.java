@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class CurrentEvents extends AppCompatActivity {
+public class CurrentEvents extends AppCompatActivityWithPDMenu {
     private ProgressDialog progress;
     private GoogleApiClient googleApiClient;
     private GoogleSignInAccount acct;

@@ -45,7 +45,7 @@ This means that you will need to hit the little golden stars after you place an 
  */
 
 
-public class MainActivity extends AppCompatActivity implements
+public class MainActivity extends AppCompatActivityWithPDMenu implements
                                     GoogleApiClient.OnConnectionFailedListener,
                                                         View.OnClickListener {
 
@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements
     StreamAudio mService = null;
 
     ProgressDialog progress;
-
+/**
     @Override
     public boolean onCreateOptionsMenu(Menu menu){
         MenuInflater inflator = getMenuInflater();
@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements
         }
         return true;
     }
-
+*/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
