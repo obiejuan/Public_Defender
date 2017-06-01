@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
     private static final String DEV_REAL_PHONE = "192.168.1.118"; // your local LAN IP (this is bryan's for example ;)
     private static final String PRODUCTION_SERVER = "138.68.200.193";
 
-    private final String externalServerIP = DEV_REAL_PHONE;
+    private final String externalServerIP = PRODUCTION_SERVER;
     private final String externalServerPort = "3000";
 
     boolean mBound = false;
