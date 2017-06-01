@@ -19,11 +19,15 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -47,7 +51,7 @@ This means that you will need to hit the little golden stars after you place an 
  */
 
 
-public class MainActivity extends AppCompatActivity implements
+public class MainActivity extends AppCompatActivityWithPDMenu implements
                                     GoogleApiClient.OnConnectionFailedListener,
                                                         View.OnClickListener,
                                                         GoogleApiClient.ConnectionCallbacks{
@@ -131,10 +135,10 @@ public class MainActivity extends AppCompatActivity implements
     private void changeButtonState(boolean b) {
         Button rec = (Button) findViewById(R.id.record_button);
         rec.setEnabled(b);
-        Button curr_events = (Button) findViewById(R.id.current_events_button);
-        curr_events.setEnabled(b);
-        Button menu_btn = (Button) findViewById(R.id.my_recording_button);
-        menu_btn.setEnabled(b);
+        //Button curr_events = (Button) findViewById(R.id.current_events_button);
+        //curr_events.setEnabled(b);
+        //Button menu_btn = (Button) findViewById(R.id.my_recording_button);
+        //menu_btn.setEnabled(b);
     }
 
     private void signOut() {
