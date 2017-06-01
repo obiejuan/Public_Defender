@@ -8,8 +8,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.IBinder;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -31,6 +35,8 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationServices;
+
 import org.json.JSONException;
 import java.net.MalformedURLException;
 
@@ -43,7 +49,8 @@ This means that you will need to hit the little golden stars after you place an 
 
 public class MainActivity extends AppCompatActivity implements
                                     GoogleApiClient.OnConnectionFailedListener,
-                                                        View.OnClickListener {
+                                                        View.OnClickListener,
+                                                        GoogleApiClient.ConnectionCallbacks{
 
     private static final String TAG = "SignInActivity";
     private static final int RC_SIGN_IN = 9001;
@@ -78,6 +85,8 @@ public class MainActivity extends AppCompatActivity implements
     GeoService geo_service = null;
     boolean geo_bound = false;
 
+    Location mLastLocation;
+
     ProgressDialog progress;
 
     @Override
@@ -103,6 +112,9 @@ public class MainActivity extends AppCompatActivity implements
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
                 .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
                 .build();
 
         SignInButton signInButton = (SignInButton) findViewById(R.id.sign_in_button);
@@ -172,6 +184,7 @@ public class MainActivity extends AppCompatActivity implements
                 }
             });
         }
+        mGoogleApiClient.connect();
         Intent geoIntent = new Intent(this, GeoService.class);
         bindService(geoIntent, geo_connection, Context.BIND_AUTO_CREATE);
 
@@ -327,19 +340,22 @@ public class MainActivity extends AppCompatActivity implements
             Context context = getApplicationContext();
 
             double[] geo = {0.0, 0.0};
-            if(geoHandler.hasGeolocation()) {
+           /* if(geoHandler.hasGeolocation()) {
                 geo = geoHandler.getGeolocation();
             }
             else
             {
                 Toast.makeText(getApplicationContext(), "We couldn't find your location! Try again later.", Toast.LENGTH_LONG);
                 return;
-            }
+            }*/
+
+            geo[0] = mLastLocation.getLatitude();
+            geo[1] = mLastLocation.getLongitude();
+            String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
 
             if(!(geo[0] == 0.0 && geo[1] == 0.0))
                 Log.d("[GEO]", (geo[1] + ", " + geo[0]));
 
-            String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
             if (!isRecording) {
                 progress = new ProgressDialog(this);
                 progress.setTitle("Starting...");
@@ -404,6 +420,7 @@ public class MainActivity extends AppCompatActivity implements
     public void gotoCurrentEvents(View view) {
         if (isSignedIn) {
             Intent intent = new Intent(this, CurrentEvents.class);
+            intent.putExtra("mLastLocation", mLastLocation);
             startActivity(intent);
         } else {
             promptSignIn();
@@ -435,6 +452,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onStop() {
         super.onStop();
+        mGoogleApiClient.disconnect();
         if (mProgressDialog != null) {
             mProgressDialog.dismiss();
         }
@@ -490,5 +508,19 @@ public class MainActivity extends AppCompatActivity implements
     }
 
 
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        Log.d(TAG, "onConnected: Location services connected!");
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if (mLastLocation != null) {
+            mLastLocation.getLatitude();
+            mLastLocation.getLongitude();
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
 }
 

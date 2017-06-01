@@ -50,7 +50,7 @@ public class EventMap extends FragmentActivity implements OnMapReadyCallback {
         mMap = googleMap;
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         JSONArray events = (JSONArray) SharedData.getKey("event_list");
-        double[] point_user = (double[]) SharedData.getKey("location");
+        double[] point_user = (double[]) SharedData.getKey("user_location");
         Log.d("GEO", "LOCATION: " + String.valueOf(point_user));
         LatLng user_mark = new LatLng(point_user[0], point_user[1]);
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
@@ -59,11 +59,13 @@ public class EventMap extends FragmentActivity implements OnMapReadyCallback {
             for (int i = 0; i < events.length(); ++i) {
                 try {
                     String point = events.getJSONObject(i).getString("location");
-                    double[] point_numeric = parse_point(point);
-                    LatLng mark = new LatLng(point_numeric[0], point_numeric[1]);
+                    Log.d("GEO", "onMapReady: " + point);
+                    double lat = events.getJSONObject(i).getJSONObject("location").getDouble("y");
+                    double lon = events.getJSONObject(i).getJSONObject("location").getDouble("x");
+                    Log.d("GEO", "onMapReady: " + String.valueOf(lat) + ", " + String.valueOf(lon));
+                    LatLng mark = new LatLng(lat, lon);
                     builder.include(mark);
-                    Log.d("[MapPoint]", point);
-                    String title = events.getJSONObject(i).getString("location");
+                    //String title = events.getJSONObject(i).getString("location");
                     String distance = events.getJSONObject(i).getString("event_dist");
                     int id = events.getJSONObject(i).getInt("event_id");
                     mMap.addMarker(new MarkerOptions().position(mark)

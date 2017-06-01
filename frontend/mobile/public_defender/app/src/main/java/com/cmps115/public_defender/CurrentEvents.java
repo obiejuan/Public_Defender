@@ -4,8 +4,11 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,6 +22,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -35,13 +39,29 @@ public class CurrentEvents extends AppCompatActivity {
     private GoogleApiClient googleApiClient;
     private GoogleSignInAccount acct;
     private GeoHandler geoHandler;
+    Location mLastLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Intent activityIntent = getIntent();
+        mLastLocation = activityIntent.getParcelableExtra("mLastLocation");
+
         setContentView(R.layout.activity_current_events);
         acct = (GoogleSignInAccount) SharedData.getKey("google_acct");
         googleApiClient = (GoogleApiClient) SharedData.getKey("google_api_client");
+        /*if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }*/
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
         Log.d("google_api_client:", String.valueOf(googleApiClient.isConnected()));
         Log.d("google_acct:", String.valueOf(acct.getIdToken()));
     }
@@ -131,21 +151,16 @@ public class CurrentEvents extends AppCompatActivity {
 
     private void findCurrentEventsOnServer()
     {
-        double[] geo = {0.0, 0.0};
-        if(geoHandler.hasGeolocation()) {
-            geo = geoHandler.getGeolocation();
-        }
-        else
-        {
-            Toast.makeText(getApplicationContext(), "We couldn't find your location! Try again later.", Toast.LENGTH_SHORT);
-            return;
-        }
-
         holdOnPopup();
-
+        double[] geo = {0.0, 0.0};
+        geo[0] = mLastLocation.getLatitude(); // y
+        geo[1] = mLastLocation.getLongitude(); // x
         String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
-        Log.d("[GEO_DATA]", geo_data);
-        SharedData.setKey("location", geo);
+
+        if(!(geo[0] == 0.0 && geo[1] == 0.0))
+            Log.d("[GEO]", (geo[1] + ", " + geo[0]));
+
+        SharedData.setKey("user_location", geo);
 
         JSONObject jsonRequest = new JSONObject();
         try {
