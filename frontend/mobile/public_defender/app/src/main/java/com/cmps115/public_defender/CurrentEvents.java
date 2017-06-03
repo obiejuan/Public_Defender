@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -70,7 +71,12 @@ public class CurrentEvents extends AppCompatActivityWithPDMenu {
     protected void onStart(){
         super.onStart();
         geoHandler = new GeoHandler(this);
-        findCurrentEventsOnServer();
+        if(isGpsEnabled()) {
+            findCurrentEventsOnServer();
+        } else {
+            TextView enable_geo_text = (TextView)findViewById(R.id.no_incidents_text);
+            enable_geo_text.setText("Woops! Please enable your GPS and reload.");
+        }
     }
 
     private class CustomArrayAdaptor extends ArrayAdapter<String> {
@@ -232,5 +238,10 @@ public class CurrentEvents extends AppCompatActivityWithPDMenu {
             // what to do after it's done. Maybe update the UI thread?
             Log.d("[onPostExecute]", result.toString());
         }
+    }
+    private boolean isGpsEnabled()
+    {
+        LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
+        return service.isProviderEnabled(LocationManager.GPS_PROVIDER)&&service.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
     }
 }
