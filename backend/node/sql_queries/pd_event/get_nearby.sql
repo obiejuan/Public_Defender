@@ -6,7 +6,8 @@
  *	@author: Bryan M.
  */
  
-SELECT event_id, location, active, point($<current_location>) <@> pd_event.location AS event_dist
+SELECT event_id, location, active, event_date, point($<current_location>) <@> pd_event.location 
+AS event_dist, event_date - now() AS elapsed_time
 FROM pd_event 
 WHERE (point($<current_location>) <@> pd_event.location) < ($<distance>)
 AND pd_event.active=true
