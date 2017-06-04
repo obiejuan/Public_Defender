@@ -153,12 +153,13 @@ public class CurrentEvents extends AppCompatActivityWithPDMenu {
     {
         holdOnPopup();
         double[] geo = {0.0, 0.0};
+
+        if(mLastLocation == null) return;
+
         geo[0] = mLastLocation.getLatitude(); // y
         geo[1] = mLastLocation.getLongitude(); // x
         String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
-
-        if(!(geo[0] == 0.0 && geo[1] == 0.0))
-            Log.d("[GEO]", (geo[1] + ", " + geo[0]));
+        Log.d("[GEO]", (geo[1] + ", " + geo[0]));
 
         SharedData.setKey("user_location", geo);
 

@@ -23,18 +23,6 @@ public class AppCompatActivityWithPDMenu extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item){
         switch(item.getItemId()){
-            case R.id.action_sendToHome:
-                Intent sendToHome = new Intent(this, MainActivity.class);
-                this.startActivity(sendToHome);
-                break;
-            case R.id.action_sendToMyRecordings:
-                Intent sendToMyRecordings = new Intent(this, FileBrowser.class);
-                this.startActivity(sendToMyRecordings);
-                break;
-            case R.id.action_sendToCurrentEvents:
-                Intent sendToMyCurrentEvents = new Intent(this, CurrentEvents.class);
-                this.startActivity(sendToMyCurrentEvents);
-                break;
             case R.id.action_sendToFAQ:
                 Intent sendToFAQ = new Intent(this, HowtoFaqs.class);
                 this.startActivity(sendToFAQ);

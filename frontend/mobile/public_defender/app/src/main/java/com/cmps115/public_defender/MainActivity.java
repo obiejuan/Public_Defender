@@ -9,25 +9,20 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.IBinder;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -42,6 +37,7 @@ import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationServices;
 
 import org.json.JSONException;
+
 import java.net.MalformedURLException;
 
 /*
@@ -52,9 +48,9 @@ This means that you will need to hit the little golden stars after you place an 
 
 
 public class MainActivity extends AppCompatActivityWithPDMenu implements
-                                    GoogleApiClient.OnConnectionFailedListener,
-                                                        View.OnClickListener,
-                                                        GoogleApiClient.ConnectionCallbacks{
+        GoogleApiClient.OnConnectionFailedListener,
+        View.OnClickListener,
+        GoogleApiClient.ConnectionCallbacks {
 
     private static final String TAG = "SignInActivity";
     private static final int RC_SIGN_IN = 9001;
@@ -62,7 +58,6 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
     GoogleApiClient mGoogleApiClient;
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
     private static final int REQUEST_LOCATION_FINE_PERMISSION = 420;
-    GeoHandler geoHandler = null;
     private Intent streamIntent = null;
     private boolean isRecording = false;
 
@@ -108,22 +103,13 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
         findViewById(R.id.sign_out_button).setOnClickListener(this);
         findViewById(R.id.disconnect_button).setOnClickListener(this);
 
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .requestIdToken(getString(R.string.CLIENT_ID))
-                .build();
-
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
-                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
+        if(!requestLocation()) {
+            showLocationSettingsAlert();
+            finish();
+        }
 
         SignInButton signInButton = (SignInButton) findViewById(R.id.sign_in_button);
         signInButton.setSize(SignInButton.SIZE_STANDARD);
-
     }
 
 
@@ -153,6 +139,11 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
                         // [END_EXCLUDE]
                     }
                 });
+    }
+
+    public void showLocationSettingsAlert() {
+        Toast toast = Toast.makeText(getApplicationContext(), "You don't have location enabled! Enable it and restart Public Defender.", Toast.LENGTH_LONG);
+        toast.show();
     }
 
     @Override
@@ -188,11 +179,10 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
                 }
             });
         }
+
         mGoogleApiClient.connect();
         Intent geoIntent = new Intent(this, GeoService.class);
         bindService(geoIntent, geo_connection, Context.BIND_AUTO_CREATE);
-
-        geoHandler = new GeoHandler(this);
     }
 
     @Override
@@ -224,8 +214,8 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
             // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
             mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getEmail()));
-            Log.d(TAG, "handleSignInResult: "+ acct.getEmail());
-            Log.d(TAG, "handleSignInResult: "+ acct.getIdToken());
+            Log.d(TAG, "handleSignInResult: " + acct.getEmail());
+            Log.d(TAG, "handleSignInResult: " + acct.getIdToken());
             /*
                 Send token to server?
                 Alternatively, just send on every request and call verification on that.
@@ -238,12 +228,13 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
             updateUI(true);
         } else {
             // Signed out, show unauthenticated UI.
-           changeButtonState(false);
+            changeButtonState(false);
             isSignedIn = false;
             updateUI(false);
         }
     }
-    public void gotoMyRecordings(View view){
+
+    public void gotoMyRecordings(View view) {
         Intent intent = new Intent(this, FileBrowser.class);
         startActivity(intent);
     }
@@ -297,6 +288,7 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
         isRecording = savedInstanceState.getBoolean("is_recording");
 
     }
+
     /******
      * Called immediately after the service is built and connects to the main
      * thread. So far just used to initialize mService, mBound variables.
@@ -309,6 +301,7 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
             mService = binder.getService();
             mBound = true;
         }
+
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
             mService.stopStream();
@@ -324,6 +317,7 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
             geo_service = binder.getService();
             geo_bound = true;
         }
+
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
             geo_bound = false;
@@ -339,28 +333,20 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
     }
 
     public void broadCast(View view) {
-       //if(!permissionToRecordAccepted || !permissionForLocationAccepted) return;
+        //if(!permissionToRecordAccepted || !permissionForLocationAccepted) return;
 
         if (isSignedIn) {
-            final Button r_button = (Button)findViewById(R.id.record_button);
+            final Button r_button = (Button) findViewById(R.id.record_button);
             Context context = getApplicationContext();
 
             double[] geo = {0.0, 0.0};
-           /* if(geoHandler.hasGeolocation()) {
-                geo = geoHandler.getGeolocation();
-            }
-            else
-            {
-                Toast.makeText(getApplicationContext(), "We couldn't find your location! Try again later.", Toast.LENGTH_LONG);
-                return;
-            }*/
+
+            if (mLastLocation == null) return;
 
             geo[0] = mLastLocation.getLatitude();
             geo[1] = mLastLocation.getLongitude();
             String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
-
-            if(!(geo[0] == 0.0 && geo[1] == 0.0))
-                Log.d("[GEO]", (geo[1] + ", " + geo[0]));
+            Log.d("[GEO]", (geo[1] + ", " + geo[0]));
 
             if (!isRecording) {
                 progress = new ProgressDialog(this);
@@ -370,14 +356,14 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
                 progress.show();
                 Log.d(TAG, "broadCast: It should start...");
                 Intent streamIntent = new Intent(this, StreamAudio.class);
-                String full_url = "http://" + externalServerIP + ":"  + externalServerPort + "/upload/";
+                String full_url = "http://" + externalServerIP + ":" + externalServerPort + "/upload/";
                 streamIntent.putExtra("host_string", full_url);
                 streamIntent.putExtra("output_dir", context.getExternalCacheDir().getAbsolutePath());
                 streamIntent.putExtra("geo", geo_data);
                 try {
                     mService.init_stream(streamIntent);
                     Log.d(TAG, "INIT STREAM STARTED!!");
-                } catch (StreamException|MalformedURLException|InterruptedException|JSONException e) { // error response
+                } catch (StreamException | MalformedURLException | InterruptedException | JSONException e) { // error response
                     isRecording = false;
                     toastErrorMessage(e);
                     r_button.setText("Record");
@@ -385,11 +371,10 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
                     return;
                 }
                 mService.stream_recording();
-                r_button.setText("Stop Recording.");
+                r_button.setText("Stop Recording");
                 progress.hide();
                 isRecording = !isRecording;
-            }
-            else if (isRecording) {
+            } else if (isRecording) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setMessage("Are you sure you want to stop broadcasting?");
                 builder.setCancelable(true);
@@ -419,13 +404,15 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
             Log.d("Map", "clicked menu");
             startActivity(intent);
         } else {
-           promptSignIn();
+            promptSignIn();
         }
     }
 
     public void gotoCurrentEvents(View view) {
         if (isSignedIn) {
             Intent intent = new Intent(this, CurrentEvents.class);
+            if(mLastLocation == null) return;
+
             intent.putExtra("mLastLocation", mLastLocation);
             startActivity(intent);
         } else {
@@ -433,7 +420,7 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
         }
     }
 
-    public void promptSignIn(){
+    public void promptSignIn() {
         Context context = getApplicationContext();
         CharSequence text = "You must sign in";
         int duration = Toast.LENGTH_SHORT;
@@ -494,35 +481,66 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode){
+        switch (requestCode) {
             case REQUEST_RECORD_AUDIO_PERMISSION:
-                permissionToRecordAccepted  = (grantResults[0] == PackageManager.PERMISSION_GRANTED);
-
+                permissionToRecordAccepted = (grantResults[0] == PackageManager.PERMISSION_GRANTED);
+                if(!permissionToRecordAccepted){
+                    finish();
+                }
                 // Request the next premission (cascading due to its async nature)
                 askForPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_LOCATION_FINE_PERMISSION);
                 break;
             case REQUEST_LOCATION_FINE_PERMISSION:
                 permissionForLocationAccepted = (grantResults[0] == PackageManager.PERMISSION_GRANTED);
-                double[] location = geoHandler.getGeolocation();
-                // Debug info
-                Log.d("Geolocation permission", "Allowed: " + (grantResults[0] == PackageManager.PERMISSION_GRANTED));
-                Log.d("Has location on", "Location on: " + geoHandler.hasGeolocation());
-                Log.d("Geolocation", "Lat: " + location[0] + " Long: " + location[1]);
+                if(!permissionForLocationAccepted){
+                    finish();
+                }
                 break;
         }
-        if (!permissionToRecordAccepted) finish();
     }
 
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Log.d(TAG, "onConnected: Location services connected!");
+        setupLocation();
+    }
+
+    private void setupLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.d(TAG, "Location servers not yet allowed!");
+            return;
+        }
+
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         if (mLastLocation != null) {
             mLastLocation.getLatitude();
             mLastLocation.getLongitude();
         }
     }
+
+    private boolean requestLocation() {
+        boolean canRequest = ((LocationManager)getApplicationContext().getSystemService(LOCATION_SERVICE)).isProviderEnabled(LocationManager.GPS_PROVIDER);
+        if(canRequest) {
+            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestEmail()
+                    .requestIdToken(getString(R.string.CLIENT_ID))
+                    .build();
+
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
+                    .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
 
     @Override
     public void onConnectionSuspended(int i) {
