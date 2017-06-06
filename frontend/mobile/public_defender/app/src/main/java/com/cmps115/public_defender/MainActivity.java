@@ -19,11 +19,15 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -48,17 +52,17 @@ This means that you will need to hit the little golden stars after you place an 
  */
 
 
-public class MainActivity extends AppCompatActivity implements
-        GoogleApiClient.OnConnectionFailedListener,
-        View.OnClickListener,
-        GoogleApiClient.ConnectionCallbacks {
+public class MainActivity extends AppCompatActivityWithPDMenu implements
+                                    GoogleApiClient.OnConnectionFailedListener,
+                                                        View.OnClickListener,
+                                                        GoogleApiClient.ConnectionCallbacks{
 
     private static final String TAG = "SignInActivity";
     private static final int RC_SIGN_IN = 9001;
 
     GoogleApiClient mGoogleApiClient;
-    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 1;
-    private static final int REQUEST_LOCATION_FINE_PERMISSION = 2;
+    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
+    private static final int REQUEST_LOCATION_FINE_PERMISSION = 420;
     GeoHandler geoHandler = null;
     private Intent streamIntent = null;
     private boolean isRecording = false;
@@ -129,10 +133,10 @@ public class MainActivity extends AppCompatActivity implements
     private void changeButtonState(boolean b) {
         Button rec = (Button) findViewById(R.id.record_button);
         rec.setEnabled(b);
-        Button curr_events = (Button) findViewById(R.id.current_events_button);
-        curr_events.setEnabled(b);
-        Button menu_btn = (Button) findViewById(R.id.my_recording_button);
-        menu_btn.setEnabled(b);
+        //Button curr_events = (Button) findViewById(R.id.current_events_button);
+        //curr_events.setEnabled(b);
+        //Button menu_btn = (Button) findViewById(R.id.my_recording_button);
+        //menu_btn.setEnabled(b);
     }
 
     private void signOut() {
@@ -227,13 +231,12 @@ public class MainActivity extends AppCompatActivity implements
             updateUI(true);
         } else {
             // Signed out, show unauthenticated UI.
-            changeButtonState(false);
+           changeButtonState(false);
             isSignedIn = false;
             updateUI(false);
         }
     }
-
-    public void gotoMyRecordings(View view) {
+    public void gotoMyRecordings(View view){
         Intent intent = new Intent(this, FileBrowser.class);
         startActivity(intent);
     }
@@ -283,7 +286,7 @@ public class MainActivity extends AppCompatActivity implements
         super.onRestoreInstanceState(savedInstanceState);
         streamIntent = savedInstanceState.getParcelable("stream_intent");
         isRecording = savedInstanceState.getBoolean("is_recording");
-        mGoogleApiClient.connect();
+
     }
 
     /******
@@ -329,8 +332,8 @@ public class MainActivity extends AppCompatActivity implements
     public void broadCast(View view) {
         //if(!permissionToRecordAccepted || !permissionForLocationAccepted) return;
 
-        if (isSignedIn && hasPermissions() && mLastLocation != null) {
-            final Button r_button = (Button) findViewById(R.id.record_button);
+        if (isSignedIn) {
+            final Button r_button = (Button)findViewById(R.id.record_button);
             Context context = getApplicationContext();
 
             double[] geo = {0.0, 0.0};
@@ -412,21 +415,12 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    public void promptSignIn() {
-        if (!isSignedIn) {
-            Context context = getApplicationContext();
-            CharSequence text = "You must sign in";
-            int duration = Toast.LENGTH_SHORT;
-            Toast toast = Toast.makeText(context, text, duration);
-            toast.show();
-        } else {
-            Context context = getApplicationContext();
-            CharSequence text = "Some unknown error. Is location enabled? Is internet working?";
-            int duration = Toast.LENGTH_LONG;
-            Toast toast = Toast.makeText(context, text, duration);
-            toast.show();
-        }
-
+    public void promptSignIn(){
+        Context context = getApplicationContext();
+        CharSequence text = "You must sign in";
+        int duration = Toast.LENGTH_SHORT;
+        Toast toast = Toast.makeText(context, text, duration);
+        toast.show();
     }
 
     private void revokeAccess() {
@@ -495,15 +489,20 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
+        switch (requestCode){
             case REQUEST_RECORD_AUDIO_PERMISSION:
-                permissionToRecordAccepted = (grantResults[0] == PackageManager.PERMISSION_GRANTED);
+                permissionToRecordAccepted  = (grantResults[0] == PackageManager.PERMISSION_GRANTED);
 
                 // Request the next premission (cascading due to its async nature)
                 askForPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_LOCATION_FINE_PERMISSION);
                 break;
             case REQUEST_LOCATION_FINE_PERMISSION:
                 permissionForLocationAccepted = (grantResults[0] == PackageManager.PERMISSION_GRANTED);
+                double[] location = geoHandler.getGeolocation();
+                // Debug info
+                Log.d("Geolocation permission", "Allowed: " + (grantResults[0] == PackageManager.PERMISSION_GRANTED));
+                Log.d("Has location on", "Location on: " + geoHandler.hasGeolocation());
+                Log.d("Geolocation", "Lat: " + location[0] + " Long: " + location[1]);
                 break;
         }
         if (!permissionToRecordAccepted) finish();
@@ -512,12 +511,10 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Log.d(TAG, "onConnected: Location services connected!");
-        if (hasPermissions()) {
-            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-            if (mLastLocation != null) {
-                mLastLocation.getLatitude();
-                mLastLocation.getLongitude();
-            }
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if (mLastLocation != null) {
+            mLastLocation.getLatitude();
+            mLastLocation.getLongitude();
         }
     }
 
