@@ -29,7 +29,7 @@ import java.util.List;
  * Author: Payton
  */
 
-public class FileBrowser extends AppCompatActivity {
+public class FileBrowser extends AppCompatActivityWithPDMenu {
     private String path;
     private File dir;
     private List<String> values = new ArrayList<String>();
