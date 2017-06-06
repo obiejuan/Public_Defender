@@ -50,7 +50,7 @@ public class CurrentEvents extends AppCompatActivity {
         setContentView(R.layout.activity_current_events);
         acct = (GoogleSignInAccount) SharedData.getKey("google_acct");
         googleApiClient = (GoogleApiClient) SharedData.getKey("google_api_client");
-        /*if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -60,7 +60,7 @@ public class CurrentEvents extends AppCompatActivity {
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
             return;
-        }*/
+        }
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
         Log.d("google_api_client:", String.valueOf(googleApiClient.isConnected()));
         Log.d("google_acct:", String.valueOf(acct.getIdToken()));
