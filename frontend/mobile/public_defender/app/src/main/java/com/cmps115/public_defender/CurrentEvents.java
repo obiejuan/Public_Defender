@@ -61,7 +61,7 @@ public class CurrentEvents extends AppCompatActivityWithPDMenu {
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+
         Log.d("google_api_client:", String.valueOf(googleApiClient.isConnected()));
         Log.d("google_acct:", String.valueOf(acct.getIdToken()));
     }
@@ -70,6 +70,7 @@ public class CurrentEvents extends AppCompatActivityWithPDMenu {
     protected void onStart(){
         super.onStart();
         geoHandler = new GeoHandler(this);
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
         findCurrentEventsOnServer();
     }
 
@@ -136,6 +137,19 @@ public class CurrentEvents extends AppCompatActivityWithPDMenu {
         }
     }
 
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        //progress.dismiss();
+    }
+    @Override
+    protected void onPause(){
+        super.onPause();
+        progress.dismiss();
+    }
+
+
+
     public void goHome(View view) {
         finish();
     }
@@ -153,12 +167,16 @@ public class CurrentEvents extends AppCompatActivityWithPDMenu {
     {
         holdOnPopup();
         double[] geo = {0.0, 0.0};
+
+        if(mLastLocation == null) {
+            progress.dismiss();
+            return;
+        }
+
         geo[0] = mLastLocation.getLatitude(); // y
         geo[1] = mLastLocation.getLongitude(); // x
         String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
-
-        if(!(geo[0] == 0.0 && geo[1] == 0.0))
-            Log.d("[GEO]", (geo[1] + ", " + geo[0]));
+        Log.d("[GEO]", (geo[1] + ", " + geo[0]));
 
         SharedData.setKey("user_location", geo);
 

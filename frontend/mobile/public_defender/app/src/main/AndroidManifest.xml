@@ -34,16 +34,12 @@
             android:label="@string/title_activity_login"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".Settings"
-            android:parentActivityName=".Menu"
-            android:screenOrientation="portrait" />
-        <activity
             android:name=".Menu"
             android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".CurrentEvents"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".Menu"
             android:screenOrientation="portrait" />
         <activity
             android:name=".FileBrowser"
@@ -54,17 +50,13 @@
 
         <activity
             android:name=".HowtoFaqs"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".Menu"
             android:screenOrientation="portrait" />
 
         <service
             android:name=".StreamAudio"
             android:enabled="true"
             android:exported="false" />
-        <service
-            android:name=".GeoService"
-            android:enabled="true"
-            android:exported="false"/>
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").

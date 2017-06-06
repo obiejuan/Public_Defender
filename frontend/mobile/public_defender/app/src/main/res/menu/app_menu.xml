@@ -3,22 +3,9 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/action_sendToHome"
-        android:title="@string/menu_home"
-    />
-
-    <item
-        android:id="@+id/action_sendToMyRecordings"
-        android:title="@string/menu_myRecordings"
-    />
-
-    <item
-        android:id="@+id/action_sendToCurrentEvents"
-        android:title="@string/menu_current_events"
-    />
-
-    <item
         android:id="@+id/action_sendToFAQ"
-        android:title="@string/menu_faq"
-    />
+        android:title="@string/menu_faq" />
+    <item
+        android:enabled="false"
+        android:title="Profile" />
 </menu>
