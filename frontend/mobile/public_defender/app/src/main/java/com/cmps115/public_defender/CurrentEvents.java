@@ -168,8 +168,6 @@ public class CurrentEvents extends AppCompatActivityWithPDMenu {
                 row.setTag(titleText);
 
                 TextView addressText = (TextView)row.findViewById(R.id.addressText);
-                addressText.setText("Place holder address here");
-
 
             }
             else
