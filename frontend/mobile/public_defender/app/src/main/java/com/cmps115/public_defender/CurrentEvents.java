@@ -106,15 +106,15 @@ public class CurrentEvents extends AppCompatActivityWithPDMenu {
         findCurrentEventsOnServer();
     }
 
-    private class CustomArrayAdaptor extends ArrayAdapter<String> {
+    private class CustomArrayAdaptor extends ArrayAdapter<JSONObject> {
 
         Context context;
         int viewId;
-        List<String> data;
-        HashMap<String, Integer> mIdMap = new HashMap<String, Integer>();
+        List<JSONObject> data;
+        HashMap<JSONObject, Integer> mIdMap = new HashMap<JSONObject, Integer>();
         boolean listEmpty = false;
 
-        public CustomArrayAdaptor(Context context, int viewId, List<String> objects) {
+        public CustomArrayAdaptor(Context context, int viewId, List<JSONObject> objects) {
             super(context, viewId, objects);
             this.context = context;
             this.viewId = viewId;
@@ -132,7 +132,7 @@ public class CurrentEvents extends AppCompatActivityWithPDMenu {
 
         @Override
         public long getItemId(int position) {
-            String item = getItem(position);
+            JSONObject item = getItem(position);
             return mIdMap.get(item);
         }
 
@@ -150,20 +150,36 @@ public class CurrentEvents extends AppCompatActivityWithPDMenu {
                 LayoutInflater infl = ((Activity)context).getLayoutInflater();
                 row = infl.inflate(viewId, parent, false);
 
-                TextView titleText= (TextView)row.findViewById(R.id.eventText);
-                titleText.setText(data.get(position));
+                TextView titleText = (TextView)row.findViewById(R.id.eventText);
+                TextView timeText = (TextView)row.findViewById(R.id.timeText);
+
+                String sec = "0";
+                String min = "0";
+                try {
+                    String distance = data.get(position).getString("event_dist");
+                    titleText.setText("[" + data.get(position).getString("event_id") + "]: " + distance.substring(0,  Math.max(0, Math.min(4, distance.length()))) + " miles away.");
+                    sec = data.get(position).getJSONObject("elapsed_time").getString("seconds").substring(1);
+                    min = data.get(position).getJSONObject("elapsed_time").getString("minutes").substring(1);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+
+                }
+                timeText.setText(min + "m " + sec + "s");
                 row.setTag(titleText);
 
                 TextView addressText = (TextView)row.findViewById(R.id.addressText);
                 addressText.setText("Place holder address here");
 
-                TextView timeText = (TextView)row.findViewById(R.id.timeText);
-                timeText.setText("1m ago");
+
             }
             else
             {
                 TextView textView = (TextView)row.findViewById(R.id.eventText);
-                textView.setText(data.get(position));
+                try {
+                    textView.setText(data.get(position).getString("event_id"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
             return row;
         }
@@ -237,12 +253,13 @@ public class CurrentEvents extends AppCompatActivityWithPDMenu {
         JSONArray event_list = events.getJSONArray("data");
         event_list.length();
         SharedData.setKey("event_list", event_list);
-        final ArrayList<String> list = new ArrayList<String>();
+        final ArrayList<JSONObject> list = new ArrayList<JSONObject>();
 
         for (int i = 0; i < event_list.length(); ++i) {
             JSONObject this_obj = event_list.getJSONObject(i);
-            String distance = this_obj.getString("event_dist");
-            list.add("[" + this_obj.getString("event_id") + "]: " + distance.substring(0,  Math.max(0, Math.min(4, distance.length()))) + " miles away.");
+
+            list.add(this_obj);
+            //list.add();
         }
 
         final CustomArrayAdaptor adapter = new CustomArrayAdaptor(this, R.layout.current_events_list_item, list);
