@@ -19,36 +19,63 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Base.Theme.AppCompat.Light.DarkActionBar">
-
-        <activity android:name=".MainActivity" android:screenOrientation="portrait">
+        <activity
+            android:name=".MainActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.ALL_APPS" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".LoginActivity"
+        <activity
+            android:name=".LoginActivity"
             android:label="@string/title_activity_login"
-            android:screenOrientation="portrait"/>
-
-        <activity android:name=".Settings"
             android:screenOrientation="portrait" />
-
-        <activity android:name=".Menu"
+        <activity
+            android:name=".Menu"
+            android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait" />
-
-        <activity android:name=".CurrentEvents"
+        <activity
+            android:name=".CurrentEvents"
+            android:parentActivityName=".Menu"
             android:screenOrientation="portrait" />
         <activity
             android:name=".FileBrowser"
             android:label="public_defender"
-            android:theme="@style/AppTheme"
+            android:parentActivityName=".Menu"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme" />
+
+        <activity
+            android:name=".HowtoFaqs"
+            android:parentActivityName=".Menu"
             android:screenOrientation="portrait" />
 
         <service
             android:name=".StreamAudio"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="false" />
+        <!--
+             The API key for Google Maps-based APIs is defined as a string resource.
+             (See the file "res/values/google_maps_api.xml").
+             Note that the API key is linked to the encryption key used to sign the APK.
+             You need a different API key for each encryption key, including the release key that is used to
+             sign the APK for publishing.
+             You can define the keys for the debug and release targets in src/debug/ and src/release/. 
+        -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_key" />
+
+        <activity
+            android:name=".EventMap"
+            android:label="@string/title_activity_event_map">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.cmps115.public_defender.CurrentEvents" />
+        </activity>
     </application>
 
 </manifest>

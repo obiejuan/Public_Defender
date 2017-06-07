@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>sql.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          <h1>sql.js</h1>
+        
+
+        
+          <div>
+            <h3>Table of Contents</h3>
+            <ol>
+              
+                
+                <li>
+                  <a class="source" href="app.html">
+                    app.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="db.html">
+                    db.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="middleware.html">
+                    middleware.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="routes.html">
+                    routes.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="sql.html">
+                    sql.js
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="views.html">
+                    views.js
+                  </a>
+                </li>
+              
+            </ol>
+            <h3>Table Descriptions: </h3> 
+    <ol>
+        <li>
+            <a class= "source" href="pd_user.html">
+            User table
+        </a>
+        </li>
+        <li>
+            <a class= "source" href="pd_event.html">
+            Event table
+        </a>
+        </li>
+        <li>
+            <a class= "source" href="pd_recording.html">
+            Recording table
+        </a>
+        </li>
+        
+    </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        
+        
+          <div class='highlight'><pre><span class="hljs-keyword">var</span> promise = <span class="hljs-built_in">require</span>(<span class="hljs-string">'bluebird'</span>);
+<span class="hljs-keyword">var</span> pgp = <span class="hljs-built_in">require</span>(<span class="hljs-string">'pg-promise'</span>)({
+	<span class="hljs-attr">promiseLib</span>: promise
+});
+<span class="hljs-comment">/**
+ *	Helper function for setting up QueryFiles
+ *	usage:
+ *		var sqlFindUser = sql('./sql/findUser.sql');
+ *	param:
+ *		file: filename (string)
+ */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">sql</span>(<span class="hljs-params">file</span>) </span>{
+	<span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> pgp.QueryFile(file, {
+		<span class="hljs-attr">minify</span>: <span class="hljs-literal">true</span>
+	});
+}
+
+<span class="hljs-comment">/**
+ *	Setup QueryFiles once at startup
+ */</span>
+<span class="hljs-keyword">var</span> get_all = sql(<span class="hljs-string">'./sql_queries/get_all.sql'</span>);
+<span class="hljs-keyword">var</span> stopEvent = sql(<span class="hljs-string">'./sql_queries/pd_event/update_status.sql'</span>);
+<span class="hljs-keyword">var</span> getNearby = sql(<span class="hljs-string">'./sql_queries/pd_event/get_nearby.sql'</span>);
+<span class="hljs-keyword">var</span> init_upload = sql(<span class="hljs-string">'./sql_queries/pd_event/init_upload.sql'</span>);
+<span class="hljs-keyword">var</span> new_recording = sql(<span class="hljs-string">'./sql_queries/pd_recording/new_recording.sql'</span>);
+<span class="hljs-keyword">var</span> select_user = sql(<span class="hljs-string">'./sql_queries/pd_user/check_usr_exists.sql'</span>);
+<span class="hljs-keyword">var</span> create_user = sql(<span class="hljs-string">'./sql_queries/pd_user/create_usr.sql'</span>);
+<span class="hljs-keyword">var</span> get_user_events = sql(<span class="hljs-string">'./sql_queries/pd_user/get_user_events.sql'</span>);
+<span class="hljs-keyword">var</span> get_user = sql(<span class="hljs-string">'./sql_queries/pd_user/get.sql'</span>);
+
+<span class="hljs-built_in">module</span>.exports = {
+    <span class="hljs-attr">get_all</span>: get_all,
+    <span class="hljs-attr">users</span>: { 
+        <span class="hljs-attr">get</span>: get_user,
+        <span class="hljs-attr">get_by_google_id</span>: select_user,
+        <span class="hljs-attr">create</span>: create_user,
+        <span class="hljs-attr">get_events</span>: get_user_events
+     },
+     <span class="hljs-attr">events</span>: {
+        <span class="hljs-attr">stop_event</span>: stopEvent,
+        <span class="hljs-attr">get_nearby</span>: getNearby,
+        <span class="hljs-attr">start_event</span>: init_upload
+     },
+     <span class="hljs-attr">recordings</span>: {
+        <span class="hljs-attr">create</span>: new_recording
+     }
+
+}</pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

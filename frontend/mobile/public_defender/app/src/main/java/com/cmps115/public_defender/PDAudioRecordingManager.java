@@ -101,6 +101,8 @@ public class PDAudioRecordingManager {
 
     void stopRecording() {
         shouldRecord = false;
+        if(recorder == null) return;
+
         recorder.stop();
         recorder.release();
 
@@ -133,6 +135,7 @@ public class PDAudioRecordingManager {
                 dataStream.write(recordingData);
             } catch (Exception e) {
                 e.printStackTrace();
+                stopRecording();
             }
             //samples.add(recordingData); why?
             //Log.d("Sample: ", Arrays.toString(recordingData));
@@ -236,7 +239,7 @@ public class PDAudioRecordingManager {
     /* Returns a file located at our app's external cache directory */
     public static File createPcmFile(String output_dir) {
         //File file = null;
-        String timeStamp = new SimpleDateFormat("MM-dd-yyyy_HH-mm", Locale.US).format(new Date());
+        String timeStamp = new SimpleDateFormat("MM-dd-yyyy_HH-mm-ss", Locale.US).format(new Date());
         File createdFile = new File(output_dir + "/" + timeStamp + ".pcm");
         try {
             createdFile.createNewFile();

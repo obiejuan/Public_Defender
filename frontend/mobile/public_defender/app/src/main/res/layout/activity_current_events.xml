@@ -8,37 +8,38 @@
 
 
     <TextView
-        android:id="@+id/textView3"
-        android:layout_width="330dp"
-        android:layout_height="0dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginRight="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="2dp"
+        android:id="@+id/current_events_title"
+        android:layout_width="0dp"
+        android:layout_height="63dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="1dp"
         android:text="Current Events"
         android:textAlignment="center"
         android:textSize="48sp"
         android:textStyle="bold"
-        app:layout_constraintHorizontal_bias="0.492"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:layout_constraintLeft_creator="1"
         tools:layout_constraintRight_creator="1"
-        tools:layout_constraintTop_creator="1" />
+        tools:layout_constraintTop_creator="1"
+        app:layout_constraintHorizontal_bias="0.561" />
 
     <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="0dp"
-        android:layout_height="54dp"
-        android:layout_marginBottom="4dp"
+        android:layout_height="48dp"
         android:orientation="horizontal"
+        android:weightSum="1"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        android:weightSum="1"
-        app:layout_constraintHorizontal_bias="0.0"
-        android:id="@+id/linearLayout">
+        tools:layout_constraintLeft_creator="1"
+        tools:layout_constraintRight_creator="1">
 
         <Button
             android:id="@+id/current_events_home"
@@ -64,10 +65,18 @@
             app:layout_constraintLeft_toLeftOf="@+id/parent"
             tools:layout_constraintBottom_creator="1"
             tools:layout_constraintLeft_creator="1" />
+
+        <Button
+            android:id="@+id/button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_weight="0.14"
+            android:onClick="gotoMap"
+            android:text=">" />
     </LinearLayout>
 
     <ListView
-        android:id="@+id/current_events"
+        android:id="@+id/current_events_list_view"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginBottom="8dp"
@@ -75,20 +84,69 @@
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="4dp"
-        android:background="@color/common_google_signin_btn_text_dark_disabled"
-        android:divider="@color/common_google_signin_btn_text_light_default"
-        android:dividerHeight="1dp"
-        android:elevation="3dp"
-        android:fadingEdgeLength="0dp"
+        android:layout_marginTop="8dp"
+        android:background="@color/blue_grey_900"
+        android:dividerHeight="-5dp"
+        android:elevation="0dp"
+        android:fadeScrollbars="true"
+        android:fadingEdgeLength="48dp"
         android:footerDividersEnabled="false"
         android:headerDividersEnabled="false"
-        android:outlineProvider="paddedBounds"
+        android:overScrollMode="never"
+        android:requiresFadingEdge="vertical"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/linearLayout"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView3"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toBottomOf="@+id/current_events_title"
+        tools:layout_constraintLeft_creator="1"
+        tools:layout_constraintRight_creator="1" />
+
+    <LinearLayout
+        android:id="@+id/no_nearby_incidents_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginTop="8dp"
+        android:orientation="vertical"
+        android:visibility="visible"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/current_events_title">
+
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="100dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:cropToPadding="false"
+            android:visibility="visible"
+            app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+            app:layout_constraintLeft_toLeftOf="@+id/current_events_list_view"
+            app:layout_constraintRight_toRightOf="@+id/current_events_list_view"
+            app:layout_constraintTop_toBottomOf="@+id/current_events_list_view"
+            app:srcCompat="@android:drawable/ic_menu_search" />
+
+        <TextView
+            android:id="@+id/no_incidents_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="No nearby incidents found. This is a good thing."
+            tools:layout_editor_absoluteX="0dp"
+            tools:layout_editor_absoluteY="0dp" />
+
+    </LinearLayout>
 
 </android.support.constraint.ConstraintLayout>

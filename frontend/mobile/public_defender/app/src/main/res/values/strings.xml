@@ -104,12 +104,42 @@
     <string name="permission_rationale">"Contacts permissions are needed for providing email
         completions."
     </string>
+    <string name="CLIENT_ID">232250430081-g10nohsivb1mgbvdb718628ioicqs2em.apps.googleusercontent.com</string>
     <string name="title_activity_login2">Sign in</string>
     <string name="signed_out">Signed out</string>
     <string name="sign_out">Sign Out</string>
     <string name="disconnect">Disconnect</string>
     <string name="signed_in_fmt">Signed in as: %s</string>
     <string name="loading">Loading…</string>
+    <string name="title_activity_event_map">Active Events</string>
+    <string name="title_activity_maps">Map</string>
+
+    <!-- Menu Strings-->
+    <string name="menu_home">Home</string>
+    <string name="menu_myRecordings">My Recordings</string>
+    <string name="menu_current_events">Current Events</string>
+    <string name="menu_faq">FAQs</string>
+
+    <!-- How-To / FAQ strings -->
+    <string name="howtofaq">How-To/FAQ</string>
+    <string name="howto_title">How to Use Public Defender:</string>
+    <string name="howto_desc">To use Public Defender, simply press the red Record button!
+     You are free to lock your phone and place it in your pocket as the app will continue
+    to record until you explicitly stop it.  Recordings are streamed to our server, so even if your
+    phone gets \"lost\" during the recording - you\'ll still have a retrievable copy.</string>
+    <string name="faq_title">FAQ.</string>
+    <string name="faq_desc">
+        " Q: Where are my recordings stored?\n"
+        "A: Your recordings are stored both locally on your phone, and are stream to our secure server\n\n"
+        "Q: Who can access the recordings?\n"
+        "A: Only you!  The only time we touch your data is in the case where you require data retrieval.\n\n"
+        "Q: Is my data anonymous?\n"
+        "A: If you choose to, then yes.  Otherwise you are free to fill out your Profile if you wish for your information to be public.\n\n"
+        "Q: What happens in my phone is turned off?\n"
+        "A: If during a recording, all audio that was recorded up until the interruption is stored locally as well as on our servers.\n\n"
+        "Q: What information of mine is stored?\n"
+        "A: Only information that you choose to share, as well as basic information provided by the Google login.\n\n"
+    </string>
 
 
 </resources>
