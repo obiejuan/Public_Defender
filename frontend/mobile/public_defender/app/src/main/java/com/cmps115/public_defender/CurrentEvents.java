@@ -6,8 +6,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -22,6 +24,11 @@ import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.Result;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
 import org.json.JSONArray;
@@ -33,12 +40,12 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Function;
 
 public class CurrentEvents extends AppCompatActivityWithPDMenu {
     private ProgressDialog progress;
     private GoogleApiClient googleApiClient;
     private GoogleSignInAccount acct;
-    private GeoHandler geoHandler;
     Location mLastLocation;
 
     @Override
@@ -50,27 +57,52 @@ public class CurrentEvents extends AppCompatActivityWithPDMenu {
         setContentView(R.layout.activity_current_events);
         acct = (GoogleSignInAccount) SharedData.getKey("google_acct");
         googleApiClient = (GoogleApiClient) SharedData.getKey("google_api_client");
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-
         Log.d("google_api_client:", String.valueOf(googleApiClient.isConnected()));
         Log.d("google_acct:", String.valueOf(acct.getIdToken()));
+    }
+
+    public boolean safeGeo(){
+        if (mLastLocation == null) {
+            boolean canRequest = ((LocationManager)getApplicationContext().getSystemService(LOCATION_SERVICE)).isProviderEnabled(LocationManager.GPS_PROVIDER);
+            if (!canRequest) {
+                toastMessage("Location not enabled! Enable it and try again.");
+                return false;
+            }
+            progress = new ProgressDialog(this);
+            progress.setTitle("Location");
+            progress.setMessage("Finding location....");
+            progress.setCancelable(false);
+            progress.show();
+            PendingResult result = LocationServices.FusedLocationApi.flushLocations(googleApiClient);
+            ResultCallback callback = new ResultCallback() {
+                @Override
+                public void onResult(@NonNull Result result) {
+                    Log.d("onResult", "[result]" + result.getStatus().toString());
+                    mLastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+                    LocationRequest req = new LocationRequest();
+                    LocationListener listen = new LocationListener() {
+                        @Override
+                        public void onLocationChanged(Location location) {
+                            progress.dismiss();
+                            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+                        }
+                    };
+                    LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, req, listen);
+                }
+            };
+            result.setResultCallback(callback);
+
+            return false;
+        }
+        return true;
     }
 
     @Override
     protected void onStart(){
         super.onStart();
-        geoHandler = new GeoHandler(this);
-        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+        if (!safeGeo()) {
+            return;
+        }
         findCurrentEventsOnServer();
     }
 
@@ -163,13 +195,20 @@ public class CurrentEvents extends AppCompatActivityWithPDMenu {
         startActivity(intent);
     }
 
+    public void toastMessage(String msg) {
+        Context context = getApplicationContext();
+        CharSequence msg_txt = msg;
+        int duration_error = Toast.LENGTH_LONG;
+        Toast toast = Toast.makeText(context, msg_txt, duration_error);
+        toast.show();
+    }
+
     private void findCurrentEventsOnServer()
     {
         holdOnPopup();
         double[] geo = {0.0, 0.0};
 
-        if(mLastLocation == null) {
-            progress.dismiss();
+        if (!safeGeo()) {
             return;
         }
 

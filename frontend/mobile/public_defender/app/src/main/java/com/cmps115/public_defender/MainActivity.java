@@ -2,6 +2,7 @@ package com.cmps115.public_defender;
 
 import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -32,13 +33,18 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.OptionalPendingResult;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
 import org.json.JSONException;
 
 import java.net.MalformedURLException;
+import java.util.concurrent.TimeUnit;
 
 /*
 Please note that if you want to change the draw/drop theme for this activity you need to ensure you're setting the contraints.
@@ -337,6 +343,49 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
         Toast toast = Toast.makeText(context, error_txt, duration_error);
         toast.show();
     }
+    public void toastMessage(String msg) {
+        Context context = getApplicationContext();
+        CharSequence msg_txt = msg;
+        int duration_error = Toast.LENGTH_LONG;
+        Toast toast = Toast.makeText(context, msg_txt, duration_error);
+        toast.show();
+    }
+
+    public boolean safeGeo(){
+        if (mLastLocation == null) {
+            boolean canRequest = ((LocationManager)getApplicationContext().getSystemService(LOCATION_SERVICE)).isProviderEnabled(LocationManager.GPS_PROVIDER);
+            if (!canRequest) {
+                toastMessage("Location not enabled! Enable it and try again.");
+                return false;
+            }
+            progress = new ProgressDialog(this);
+            progress.setTitle("Location");
+            progress.setMessage("Finding location....");
+            progress.setCancelable(false);
+            progress.show();
+            PendingResult result = LocationServices.FusedLocationApi.flushLocations(mGoogleApiClient);
+            ResultCallback callback = new ResultCallback() {
+                @Override
+                public void onResult(@NonNull Result result) {
+                    Log.d(TAG, "[result]" + result.getStatus().toString());
+                    mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+                    LocationRequest req = new LocationRequest();
+                    LocationListener listen = new LocationListener() {
+                        @Override
+                        public void onLocationChanged(Location location) {
+                            progress.dismiss();
+                            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+                        }
+                    };
+                    LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, req, listen);
+                }
+            };
+            result.setResultCallback(callback);
+
+            return false;
+        }
+        return true;
+    }
 
     public void broadCast(View view) {
         //if(!permissionToRecordAccepted || !permissionForLocationAccepted) return;
@@ -347,8 +396,9 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
 
             double[] geo = {0.0, 0.0};
 
-            if (mLastLocation == null) return;
-
+            if (!safeGeo()) {
+                return;
+            }
             geo[0] = mLastLocation.getLatitude();
             geo[1] = mLastLocation.getLongitude();
             String geo_data = String.format("(%f, %f)", geo[1], geo[0]);
@@ -417,8 +467,12 @@ public class MainActivity extends AppCompatActivityWithPDMenu implements
     public void gotoCurrentEvents(View view) {
         if (isSignedIn) {
             Intent intent = new Intent(this, CurrentEvents.class);
-            if(mLastLocation == null) return;
-
+            if(mLastLocation == null) {
+                toastMessage("Location not enabled! If you've just enabled it. Please try again.");
+                LocationServices.FusedLocationApi.flushLocations(mGoogleApiClient);
+                mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+                return;
+            }
             intent.putExtra("mLastLocation", mLastLocation);
             startActivity(intent);
         } else {
